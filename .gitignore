@@ -1,5 +1,5 @@
 
-# Created by https://www.gitignore.io/api/c,macos,eclipse
+# Created by https://www.gitignore.io/api/c,macos,cmake,eclipse
 
 ### C ###
 # Prerequisites
@@ -54,6 +54,18 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+
+### CMake ###
+CMakeCache.txt
+CMakeFiles
+CMakeScripts
+Testing
+Makefile
+cmake_install.cmake
+install_manifest.txt
+compile_commands.json
+CTestTestfile.cmake
+build
 
 ### Eclipse ###
 
@@ -141,5 +153,5 @@ Network Trash Folder
 Temporary Items
 .apdisk
 
-# End of https://www.gitignore.io/api/c,macos,eclipse
+# End of https://www.gitignore.io/api/c,macos,cmake,eclipse
 
