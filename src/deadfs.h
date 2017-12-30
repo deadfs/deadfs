@@ -1,6 +1,7 @@
 #ifndef SRC_DEADFS_H_
 #define SRC_DEADFS_H_
 
+#include <stdlib.h>
 #include <sys/stat.h>
 
 #include "config.h"
@@ -19,6 +20,10 @@ int dfs_create(struct dfs_context *ctx, const char *path, int trunc);
 
 int dfs_open(struct dfs_context *ctx, const char *path, int flags);
 
+int dfs_write(struct dfs_context *ctx, const char *path, const unsigned char *buf, size_t len, off_t offset);
 
+int dfs_read(struct dfs_context *ctx, const char *path, unsigned char *buf, size_t len, off_t offset);
+
+int dfs_truncate(struct dfs_context *ctx, const char *path, off_t offset);
 
 #endif /* SRC_DEADFS_H_ */

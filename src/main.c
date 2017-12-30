@@ -25,7 +25,25 @@ static int fuse_create(const char *path, mode_t mode, struct fuse_file_info *fi)
 	return dfs_fuse_create(&dfs_ctx, path, mode, fi);
 }
 
+static int fuse_write(const char *path, const char *buf, size_t len, off_t offset, struct fuse_file_info *fi)
+{
+	return dfs_fuse_write(&dfs_ctx, path, buf, len, offset, fi);
+}
+
+static int fuse_read(const char *path, char *buf, size_t len, off_t offset, struct fuse_file_info *fi)
+{
+	return dfs_fuse_read(&dfs_ctx, path, buf, len, offset, fi);
+}
+
+static int fuse_truncate(const char *path, off_t offset)
+{
+	return dfs_fuse_truncate(&dfs_ctx, path, offset);
+}
+
 static struct fuse_operations fuseops = {
+	.truncate = fuse_truncate,
+	.read = fuse_read,
+	.write = fuse_write,
 	.create = fuse_create,
 	.getattr = fuse_getattr,
 	.readdir = fuse_readdir

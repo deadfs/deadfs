@@ -57,3 +57,30 @@ int dfs_fuse_create(struct dfs_context *ctx, const char *path, mode_t mode, stru
 
 	return r;
 }
+
+int dfs_fuse_write(struct dfs_context *ctx, const char *path, const char *buf, size_t len, off_t offset, struct fuse_file_info *fi)
+{
+	int r = dfs_write(ctx, path, (const unsigned char*)buf, len, offset);
+
+	if (r < 0) {
+		return -1;
+	}
+
+	return r;
+}
+
+int dfs_fuse_read(struct dfs_context *ctx, const char *path, char *buf, size_t len, off_t offset, struct fuse_file_info *fi)
+{
+	int r = dfs_read(ctx, path, (unsigned char*)buf, len, offset);
+
+	if (r < 0) {
+		return -1;
+	}
+
+	return r;
+}
+
+int dfs_fuse_truncate(struct dfs_context *ctx, const char *path, off_t offset)
+{
+	return dfs_truncate(ctx, path, offset);
+}

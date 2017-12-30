@@ -4,6 +4,9 @@ add_executable(deadfs
 	path.c
 	fuse/fuse.c 
 	ops/create.c ops/getattr.c ops/readdir.c 
+	ops/write.c
+	ops/read.c
+	ops/truncate.c
 )
 
 target_link_libraries(deadfs osxfuse)
