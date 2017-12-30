@@ -3,6 +3,7 @@
 
 #include "deadfs.h"
 #include "fuse/fuse.h"
+#include "ops/ops.h"
 
 
 static struct dfs_context dfs_ctx = {

@@ -1,8 +1,12 @@
+#include "fuse.h"
+
 #include <errno.h>
 #include <fcntl.h>
 
-#include "fuse.h"
+#include "../deadfs.h"
 #include "../err.h"
+#include "../ops/ops.h"
+
 
 struct cbdata {
 	void *buf;
