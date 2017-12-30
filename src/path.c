@@ -7,86 +7,93 @@
 
 
 
-static size_t calc_enclen(struct dfs_context *ctx, const char *path)
+static size_t calc_ppath_len(struct dfs_context *ctx, const char *vpath)
 {
-	return strlen(path)+1;
+	return strlen(vpath)+1;
 }
 
-int dfs_encpath(struct dfs_context *ctx, const char *path, char *encpath, size_t len)
+int dfs_path_vtop(struct dfs_context *ctx, const char *path, char *ppath, size_t len)
 {
-	int enclen = calc_enclen(ctx, path);
+	int enclen = calc_ppath_len(ctx, path);
 
 	if (enclen > len)
 		return DFS_ERR_NOSPACE;
 
-	strncpy(encpath, path, enclen);
+	strncpy(ppath, path, enclen);
 
 	return 0;
 }
 
-char* dfs_encpath_dup(struct dfs_context *ctx, const char *path)
+char* dfs_path_vtop_dup(struct dfs_context *ctx, const char *vpath)
 {
-	int enclen = calc_enclen(ctx, path);
-	char *ret = malloc(enclen+1);
+	int ppath_len = calc_ppath_len(ctx, vpath);
+	char *ret = malloc(ppath_len+1);
 
-	dfs_encpath(ctx, path, ret, enclen+1);
+	dfs_path_vtop(ctx, vpath, ret, ppath_len+1);
 
 
 	return ret;
 }
 
-static size_t calc_declen(struct dfs_context *ctx, const char *encpath)
+static size_t calc_vpath_len(struct dfs_context *ctx, const char *ppath)
 {
-	return strlen(encpath)+1;
+	return strlen(ppath)+1;
 }
 
-int dfs_decpath(struct dfs_context *ctx, const char *encpath, char *path, size_t len)
+int dfs_path_ptov(struct dfs_context *ctx, const char *ppath, char *path, size_t len)
 {
-	int declen = calc_declen(ctx, encpath);
+	int vpath_len = calc_vpath_len(ctx, ppath);
 
-	if (declen > len)
+	if (vpath_len > len)
 		return DFS_ERR_NOSPACE;
 
-	strncpy(path, encpath, declen);
+	strncpy(path, ppath, vpath_len);
 
 	return 0;
 }
 
-char* dfs_decpath_dup(struct dfs_context *ctx, const char *encpath)
+char* dfs_path_ptov_dup(struct dfs_context *ctx, const char *ppath)
 {
-	int declen = calc_declen(ctx, encpath);
+	int declen = calc_vpath_len(ctx, ppath);
 	char *ret = malloc(declen);
 
 	//strncpy(ret, encpath, declen+1);
-	dfs_decpath(ctx, encpath, ret, declen);
+	dfs_path_ptov(ctx, ppath, ret, declen);
 
 	return ret;
 }
 
-// Calculate fullpath length
-static size_t calc_flen(struct dfs_context *ctx, const char *path)
+// Calculate physical path length
+size_t calc_appath_len(struct dfs_context *ctx, const char *vpath)
 {
-	return snprintf(NULL, 0, "%s%s", ctx->basepath, path)+1;
+	return strlen(ctx->basepath)+calc_ppath_len(ctx, vpath);
 }
 
-int dfs_get_fullpath(struct dfs_context *ctx, const char *decpath, char *fullpath, size_t len)
+int dfs_path_vtoap(struct dfs_context *ctx, const char *vpath, char *appath, size_t len)
 {
-	int flen = calc_flen(ctx, decpath);
+	int r = -1;
+	int appath_len = calc_appath_len(ctx, vpath);
+	char *ppath = NULL;
 
-	if (flen > len)
-		return DFS_ERR_NOSPACE;
+	if (appath_len > len)
+		goto fail_len;
 
-	snprintf(fullpath, len, "%s%s", ctx->basepath, decpath);
+	ppath = dfs_path_vtop_dup(ctx, vpath);
 
-	return 0;
+	snprintf(appath, appath_len, "%s%s", ctx->basepath, ppath);
+
+	r = 0;
+	free(ppath);
+fail_len:
+	return r;
 }
 
-char *dfs_get_fullpath_dup(struct dfs_context *ctx, const char *decpath)
+char* dfs_path_vtoap_dup(struct dfs_context *ctx, const char *vpath)
 {
-	int flen = calc_flen(ctx, decpath);
-	char *ret = malloc(flen);
+	int appath_len = calc_appath_len(ctx, vpath);
+	char *ret = malloc(appath_len);
 
-	dfs_get_fullpath(ctx, decpath, ret, flen);
+	dfs_path_vtoap(ctx, vpath, ret, appath_len);
 
 	return ret;
 }

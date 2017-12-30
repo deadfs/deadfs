@@ -6,14 +6,13 @@
 
 static DIR* getdir(struct dfs_context *ctx, const char *path)
 {
-	char *encpath = dfs_encpath_dup(ctx, path);
-	char *fullpath = dfs_get_fullpath_dup(ctx, encpath);
+	char *appath = dfs_path_vtoap_dup(ctx, path);
+
 	DIR *ret = NULL;
 
-	ret = opendir(fullpath);
+	ret = opendir(appath);
 
-	free(encpath);
-	free(fullpath);
+	free(appath);
 
 	return ret;
 }
@@ -32,7 +31,9 @@ int dfs_readdir(struct dfs_context *ctx, const char *path,
 
 	for (dp=readdir(dirp); dp; dp=readdir(dirp))
 	{
-		cb(dp->d_name, NULL, p);
+		char vname[sizeof(dp->d_name)];
+		dfs_path_ptov(ctx, dp->d_name, vname, sizeof(vname));
+		cb(vname, NULL, p);
 	}
 
 	r = 0;

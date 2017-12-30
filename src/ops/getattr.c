@@ -10,21 +10,20 @@
 int dfs_getattr(struct dfs_context *ctx, const char *path, struct stat *st)
 {
 	int r = DFS_ERR_GENERIC;
-	char *encpath = dfs_encpath_dup(ctx, path);
-	char *fullpath = dfs_get_fullpath_dup(ctx, encpath);
+	char *appath = dfs_path_vtoap_dup(ctx, path);
 
-	if (access(fullpath, F_OK) == -1) {
+
+	if (access(appath, F_OK) == -1) {
 		r = DFS_ERR_NOENT;
 		goto fail_access;
 	}
 
-	if (stat(fullpath, st) != 0)
+	if (stat(appath, st) != 0)
 		goto fail_stat;
 
 	r = 0;
 fail_stat:
 fail_access:
-	free(encpath);
-	free(fullpath);
+	free(appath);
 	return r;
 }
