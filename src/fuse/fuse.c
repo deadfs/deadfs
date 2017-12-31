@@ -88,3 +88,18 @@ int dfs_fuse_truncate(struct dfs_context *ctx, const char *path, off_t offset)
 {
 	return dfs_truncate(ctx, path, offset);
 }
+
+int dfs_fuse_rmdir(struct dfs_context *ctx, const char *path)
+{
+	return dfs_rmdir(ctx, path);
+}
+
+int dfs_fuse_mkdir(struct dfs_context *ctx, const char *path, mode_t mode)
+{
+	return dfs_mkdir(ctx, path, mode);
+}
+
+int dfs_fuse_unlink(struct dfs_context *ctx, const char *path)
+{
+	return dfs_unlink(ctx, path);
+}

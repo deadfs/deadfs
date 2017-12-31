@@ -15,5 +15,8 @@ int dfs_fuse_create(struct dfs_context *ctx, const char *path, mode_t mode, stru
 int dfs_fuse_write(struct dfs_context *ctx, const char *path, const char *buf, size_t len, off_t offset, struct fuse_file_info *fi);
 int dfs_fuse_read(struct dfs_context *ctx, const char *path, char *buf, size_t len, off_t offset, struct fuse_file_info *fi);
 int dfs_fuse_truncate(struct dfs_context *ctx, const char *path, off_t offset);
+int dfs_fuse_rmdir(struct dfs_context *ctx, const char *path);
+int dfs_fuse_mkdir(struct dfs_context *ctx, const char *path, mode_t mode);
+int dfs_fuse_unlink(struct dfs_context *ctx, const char *path);
 
 #endif /* SRC_FUSE_FUSE_H_ */
