@@ -10,6 +10,7 @@ add_executable(deadfs
 	ops/rmdir.c
 	ops/mkdir.c
 	ops/unlink.c
+	ops/rename.c
 	
 	utils/base32.c
 	

@@ -56,7 +56,13 @@ static int fuse_unlink(const char *path)
 	return dfs_fuse_unlink(&dfs_ctx, path);
 }
 
+static int fuse_rename(const char *old_path, const char *new_path)
+{
+	return dfs_fuse_rename(&dfs_ctx, old_path, new_path, 0);
+}
+
 static struct fuse_operations fuseops = {
+	.rename = fuse_rename,
 	.unlink = fuse_unlink,
 	.mkdir = fuse_mkdir,
 	.rmdir = fuse_rmdir,

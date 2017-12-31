@@ -17,5 +17,6 @@ int dfs_truncate(struct dfs_context *ctx, const char *path, off_t offset);
 int dfs_rmdir(struct dfs_context *ctx, const char *path);
 int dfs_mkdir(struct dfs_context *ctx, const char *path, mode_t mode);
 int dfs_unlink(struct dfs_context *ctx, const char *path);
+int dfs_rename(struct dfs_context *ctx, const char *old_path, const char *new_path);
 
 #endif /* SRC_OPS_OPS_H_ */
