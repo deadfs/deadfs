@@ -18,5 +18,6 @@ int dfs_fuse_truncate(struct dfs_context *ctx, const char *path, off_t offset);
 int dfs_fuse_rmdir(struct dfs_context *ctx, const char *path);
 int dfs_fuse_mkdir(struct dfs_context *ctx, const char *path, mode_t mode);
 int dfs_fuse_unlink(struct dfs_context *ctx, const char *path);
+int dfs_fuse_rename(struct dfs_context *ctx, const char *old_path, const char *new_path, unsigned int flags);
 
 #endif /* SRC_FUSE_FUSE_H_ */

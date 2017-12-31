@@ -103,3 +103,8 @@ int dfs_fuse_unlink(struct dfs_context *ctx, const char *path)
 {
 	return dfs_unlink(ctx, path);
 }
+
+int dfs_fuse_rename(struct dfs_context *ctx, const char *old_path, const char *new_path, unsigned int flags)
+{
+	return dfs_rename(ctx, old_path, new_path);
+}
