@@ -41,7 +41,25 @@ static int fuse_truncate(const char *path, off_t offset)
 	return dfs_fuse_truncate(&dfs_ctx, path, offset);
 }
 
+static int fuse_rmdir(const char *path)
+{
+	return dfs_fuse_rmdir(&dfs_ctx, path);
+}
+
+static int fuse_mkdir(const char *path, mode_t mode)
+{
+	return dfs_fuse_mkdir(&dfs_ctx, path, mode);
+}
+
+static int fuse_unlink(const char *path)
+{
+	return dfs_fuse_unlink(&dfs_ctx, path);
+}
+
 static struct fuse_operations fuseops = {
+	.unlink = fuse_unlink,
+	.mkdir = fuse_mkdir,
+	.rmdir = fuse_rmdir,
 	.truncate = fuse_truncate,
 	.read = fuse_read,
 	.write = fuse_write,
