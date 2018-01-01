@@ -2,8 +2,11 @@ add_executable(deadfs
 	 
 	main.c
 	path.c
-	fuse/fuse.c 
-	ops/create.c ops/getattr.c ops/readdir.c 
+	fuse.c
+ 
+	ops/create.c
+	ops/getattr.c
+	ops/readdir.c 
 	ops/write.c
 	ops/read.c
 	ops/truncate.c

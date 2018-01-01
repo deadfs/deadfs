@@ -5,7 +5,7 @@
 
 #include <fuse.h>
 
-#include "../deadfs.h"
+#include "deadfs.h"
 
 int dfs_fuse_readdir(struct dfs_context *ctx, const char *path, void *buf, fuse_fill_dir_t filler,
 		off_t offset, struct fuse_file_info *fi);
