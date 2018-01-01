@@ -2,7 +2,7 @@
 #include <stdlib.h>
 
 #include "deadfs.h"
-#include "fuse/fuse.h"
+#include "fuse.h"
 #include "ops/ops.h"
 
 
