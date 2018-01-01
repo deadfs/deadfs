@@ -1,11 +1,8 @@
-
 #include <stdio.h>
 #include <string.h>
 
 #include "err.h"
 #include "path.h"
-
-
 
 static size_t calc_ppath_len(struct dfs_context *ctx, const char *vpath)
 {
