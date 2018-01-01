@@ -3,6 +3,7 @@ add_executable(deadfs
 	main.c
 	path.c
 	fuse.c
+	deadfs.c
  
 	ops/create.c
 	ops/getattr.c

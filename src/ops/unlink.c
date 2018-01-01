@@ -4,14 +4,9 @@
 #include "../deadfs.h"
 #include "../path.h"
 
-int dfs_unlink(struct dfs_context *ctx, const char *path)
+int dfs_unlink(struct dfs_file *file)
 {
-	int r = -1;
-	char *appath = dfs_path_vtoap_dup(ctx, path);
-
-	r = unlink(appath);
-
-	free(appath);
-
+	int r;
+	r = unlink(file->appath);
 	return r;
 }

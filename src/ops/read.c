@@ -1,18 +1,17 @@
 #include <stdio.h>
 
 #include "../deadfs.h"
-#include "../path.h"
+#include "../file.h"
 #include "../err.h"
 
 // TODO: Check precise ferror for return
 
-int dfs_read(struct dfs_context *ctx, const char *path, unsigned char *buf, size_t len, off_t offset)
+int dfs_read(struct dfs_file *file, unsigned char *buf, size_t len, off_t offset)
 {
 	int r = DFS_ERR_GENERIC, rr;
-	char *appath = dfs_path_vtoap_dup(ctx, path);
 	FILE *fp = NULL;
 
-	fp = fopen(appath, "rb");
+	fp = fopen(file->appath, "rb");
 	if (!fp)
 		goto fail_fopen;
 
@@ -33,6 +32,5 @@ fail_fread:
 fail_fseek:
 	fclose(fp);
 fail_fopen:
-	free(appath);
 	return r;
 }
