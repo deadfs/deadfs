@@ -2,7 +2,7 @@
 
 #include "ops.h"
 #include "../deadfs.h"
-#include "../path.h"
+#include "../file.h"
 
 int dfs_mkdir(struct dfs_file *file, mode_t mode)
 {
