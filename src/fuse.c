@@ -4,6 +4,7 @@
 #include <fcntl.h>
 
 #include "deadfs.h"
+#include "file.h"
 #include "err.h"
 #include "ops/ops.h"
 
@@ -19,12 +20,16 @@ static void cb(const char *name, const struct stat *st, void *p)
 {
 	struct cbdata *cd = p;
 
-	cd->filler(cd->buf, name, NULL, 0);
+	cd->filler(cd->buf, name, st, 0);
 }
 
 int dfs_fuse_readdir(struct dfs_context *ctx, const char *path, void *buf, fuse_fill_dir_t filler,
 		off_t offset, struct fuse_file_info *fi)
 {
+	int r = -1;
+	struct dfs_file *file = NULL;
+
+
 	struct cbdata cd = {
 		.buf = buf,
 		.filler = filler,
@@ -32,13 +37,30 @@ int dfs_fuse_readdir(struct dfs_context *ctx, const char *path, void *buf, fuse_
 		.fi = fi
 	};
 
+	file = dfs_get_file(ctx, path);
+	if (!file)
+		return -1;
 
-	return dfs_readdir(ctx, path, cb, &cd);
+	r = dfs_readdir(file, cb, &cd);
+
+	dfs_free_file(file);
+
+	return r;
 }
 
 int dfs_fuse_getattr(struct dfs_context *ctx, const char *path, struct stat *st)
 {
-	int r = dfs_getattr(ctx, path, st);
+	int r = -1;
+	struct dfs_file *file = NULL;
+
+
+	file = dfs_get_file(ctx, path);
+	if (!file)
+		return -1;
+
+	r = dfs_getattr(file, st);
+
+	dfs_free_file(file);
 
 	if (r < 0) {
 
@@ -53,7 +75,16 @@ int dfs_fuse_getattr(struct dfs_context *ctx, const char *path, struct stat *st)
 
 int dfs_fuse_create(struct dfs_context *ctx, const char *path, mode_t mode, struct fuse_file_info *fi)
 {
-	int r = dfs_create(ctx, path, 0);
+	int r;
+	struct dfs_file *file = NULL;
+
+	file = dfs_get_file(ctx, path);
+	if (!file)
+		return -1;
+
+	r = dfs_create(file, 0);
+
+	dfs_free_file(file);
 
 	if (r < 0) {
 		return -1;
@@ -64,7 +95,16 @@ int dfs_fuse_create(struct dfs_context *ctx, const char *path, mode_t mode, stru
 
 int dfs_fuse_write(struct dfs_context *ctx, const char *path, const char *buf, size_t len, off_t offset, struct fuse_file_info *fi)
 {
-	int r = dfs_write(ctx, path, (const unsigned char*)buf, len, offset);
+	struct dfs_file *file = NULL;
+	int r;
+
+	file = dfs_get_file(ctx, path);
+	if (!file)
+		return -1;
+
+	r = dfs_write(file, (const unsigned char*)buf, len, offset);
+
+	dfs_free_file(file);
 
 	if (r < 0) {
 		return -1;
@@ -75,7 +115,16 @@ int dfs_fuse_write(struct dfs_context *ctx, const char *path, const char *buf, s
 
 int dfs_fuse_read(struct dfs_context *ctx, const char *path, char *buf, size_t len, off_t offset, struct fuse_file_info *fi)
 {
-	int r = dfs_read(ctx, path, (unsigned char*)buf, len, offset);
+	int r;
+	struct dfs_file *file = NULL;
+
+	file = dfs_get_file(ctx, path);
+	if (!file)
+		return -1;
+
+	r = dfs_read(file, (unsigned char*)buf, len, offset);
+
+	dfs_free_file(file);
 
 	if (r < 0) {
 		return -1;
@@ -86,25 +135,80 @@ int dfs_fuse_read(struct dfs_context *ctx, const char *path, char *buf, size_t l
 
 int dfs_fuse_truncate(struct dfs_context *ctx, const char *path, off_t offset)
 {
-	return dfs_truncate(ctx, path, offset);
+	int r;
+	struct dfs_file *file = NULL;
+
+	file = dfs_get_file(ctx, path);
+	if (!file)
+		return -1;
+
+	r = dfs_truncate(file, offset);
+
+	dfs_free_file(file);
+
+	return r;
 }
 
 int dfs_fuse_rmdir(struct dfs_context *ctx, const char *path)
 {
-	return dfs_rmdir(ctx, path);
+	int r;
+	struct dfs_file *file = NULL;
+
+	file = dfs_get_file(ctx, path);
+	if (!file)
+		return -1;
+
+	r = dfs_rmdir(file);
+
+	dfs_free_file(file);
+
+	return r;
 }
 
 int dfs_fuse_mkdir(struct dfs_context *ctx, const char *path, mode_t mode)
 {
-	return dfs_mkdir(ctx, path, mode);
+	int r;
+	struct dfs_file *file = NULL;
+
+	file = dfs_get_file(ctx, path);
+	if (!file)
+		return -1;
+
+	r = dfs_mkdir(file, mode);
+
+	dfs_free_file(file);
+
+	return r;
 }
 
 int dfs_fuse_unlink(struct dfs_context *ctx, const char *path)
 {
-	return dfs_unlink(ctx, path);
+	int r;
+	struct dfs_file *file = NULL;
+
+	file = dfs_get_file(ctx, path);
+	if (!file)
+		return -1;
+
+	r = dfs_unlink(file);
+
+	dfs_free_file(file);
+
+	return r;
 }
 
 int dfs_fuse_rename(struct dfs_context *ctx, const char *old_path, const char *new_path, unsigned int flags)
 {
-	return dfs_rename(ctx, old_path, new_path);
+	int r;
+	struct dfs_file *file = NULL;
+
+	file = dfs_get_file(ctx, old_path);
+	if (!file)
+		return -1;
+
+	r = dfs_rename(file, new_path);
+
+	dfs_free_file(file);
+
+	return r;
 }

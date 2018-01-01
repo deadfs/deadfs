@@ -9,14 +9,14 @@ static size_t calc_ppath_len(struct dfs_context *ctx, const char *vpath)
 	return strlen(vpath)+1;
 }
 
-int dfs_path_vtop(struct dfs_context *ctx, const char *path, char *ppath, size_t len)
+int dfs_path_vtop(struct dfs_context *ctx, const char *vpath, char *ppath, size_t len)
 {
-	int ppath_len = calc_ppath_len(ctx, path);
+	int ppath_len = calc_ppath_len(ctx, vpath);
 
 	if (ppath_len > len)
 		return DFS_ERR_NOSPACE;
 
-	strncpy(ppath, path, ppath_len);
+	strncpy(ppath, vpath, ppath_len);
 
 	return 0;
 }
@@ -37,14 +37,14 @@ static size_t calc_vpath_len(struct dfs_context *ctx, const char *ppath)
 	return strlen(ppath)+1;
 }
 
-int dfs_path_ptov(struct dfs_context *ctx, const char *ppath, char *path, size_t len)
+int dfs_path_ptov(struct dfs_context *ctx, const char *ppath, char *vpath, size_t len)
 {
 	int vpath_len = calc_vpath_len(ctx, ppath);
 
 	if (vpath_len > len)
 		return DFS_ERR_NOSPACE;
 
-	strncpy(path, ppath, vpath_len);
+	strncpy(vpath, ppath, vpath_len);
 
 	return 0;
 }
