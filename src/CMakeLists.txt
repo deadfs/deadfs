@@ -5,6 +5,8 @@ add_executable(deadfs
 	fuse.c
 	deadfs.c
  
+ 	ops/open.c
+ 	ops/release.c
 	ops/create.c
 	ops/getattr.c
 	ops/readdir.c 
@@ -17,7 +19,7 @@ add_executable(deadfs
 	ops/rename.c
 	
 	utils/base32.c
-	
+	utils/log.c
 )
 
 target_link_libraries(deadfs osxfuse)

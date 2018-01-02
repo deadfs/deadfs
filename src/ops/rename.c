@@ -5,14 +5,16 @@
 #include "../path.h"
 #include "../file.h"
 
-int dfs_rename(struct dfs_file *file, const char *new_path)
+int dfs_rename(struct dfs_context *ctx, const char *old_path, const char *new_path)
 {
 	int r = -1;
-	char *new_appath = dfs_path_vtoap_dup(file->dfs_ctx, new_path);
+	char *old_appath = dfs_path_vtoap_dup(ctx, old_path);
+	char *new_appath = dfs_path_vtoap_dup(ctx, new_path);
 
-	r = rename(file->appath, new_appath);
-	free((void*)file->appath);
-	file->appath = new_appath;
+	r = rename(old_appath, new_appath);
+
+	free(old_appath);
+	free(new_appath);
 
 	return r;
 }

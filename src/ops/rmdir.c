@@ -2,13 +2,15 @@
 
 #include "ops.h"
 #include "../deadfs.h"
-#include "../file.h"
+#include "../path.h"
 
-int dfs_rmdir(struct dfs_file *file)
+int dfs_rmdir(struct dfs_context *ctx, const char *vpath)
 {
-	int r;
+	int r = -1;
+	char *appath = dfs_path_vtoap_dup(ctx, vpath);
 
-	r = rmdir(file->appath);
+	r = rmdir(appath);
 
+	free(appath);
 	return r;
 }

@@ -9,16 +9,10 @@
 int dfs_read(struct dfs_file *file, unsigned char *buf, size_t len, off_t offset)
 {
 	int r = DFS_ERR_GENERIC, rr;
-	FILE *fp = NULL;
-
-	fp = fopen(file->appath, "rb");
-	if (!fp)
-		goto fail_fopen;
-
-	if (fseek(fp, offset, SEEK_SET) != 0)
+	if (fseek(file->fp, offset, SEEK_SET) != 0)
 		goto fail_fseek;
 
-	if ((rr=fread(buf, 1, len, fp)) >= 0) {
+	if ((rr=fread(buf, 1, len, file->fp)) >= 0) {
 		r = rr;
 		goto partial_fread;
 	} else {
@@ -30,7 +24,5 @@ int dfs_read(struct dfs_file *file, unsigned char *buf, size_t len, off_t offset
 partial_fread:
 fail_fread:
 fail_fseek:
-	fclose(fp);
-fail_fopen:
 	return r;
 }
