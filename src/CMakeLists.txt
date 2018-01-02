@@ -20,6 +20,9 @@ add_executable(deadfs
 	
 	utils/base32.c
 	utils/log.c
+	
+	nencs/base32.c
+	
 )
 
 target_link_libraries(deadfs osxfuse)
