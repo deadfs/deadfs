@@ -4,10 +4,11 @@
 #include "deadfs.h"
 #include "fuse.h"
 #include "ops/ops.h"
-
+#include "nencs/nencs.h"
 
 static struct dfs_context dfs_ctx = {
-		.basepath = "/Users/francesco/Downloads/tmp/a"
+		.basepath = "/Users/francesco/Downloads/tmp/a",
+		.nenc_id = DFS_NENC_BASE32
 };
 
 static int fuse_getattr(const char *path, struct stat *st)
@@ -88,5 +89,6 @@ static struct fuse_operations fuseops = {
 
 int main(int argc, char **argv)
 {
+	dfs_nenc_base32_init(&dfs_ctx);
     return fuse_main(argc, argv, &fuseops, NULL);
 }
