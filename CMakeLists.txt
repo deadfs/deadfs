@@ -14,6 +14,6 @@ if (NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE "RELEASE")
 endif()
 
-#include_directories("src")
+include_directories("ext/uthash/include")
 
 add_subdirectory(src)

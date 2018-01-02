@@ -7,6 +7,7 @@
 #include "file.h"
 #include "err.h"
 #include "ops/ops.h"
+#include "utils/log.h"
 
 
 struct cbdata {
@@ -27,8 +28,8 @@ int dfs_fuse_readdir(struct dfs_context *ctx, const char *path, void *buf, fuse_
 		off_t offset, struct fuse_file_info *fi)
 {
 	int r = -1;
-	struct dfs_file *file = NULL;
 
+	DFS_LOG_STATUS(ctx, "vpath: %s", path);
 
 	struct cbdata cd = {
 		.buf = buf,
@@ -37,30 +38,20 @@ int dfs_fuse_readdir(struct dfs_context *ctx, const char *path, void *buf, fuse_
 		.fi = fi
 	};
 
-	file = dfs_get_file(ctx, path);
-	if (!file)
-		return -1;
 
-	r = dfs_readdir(file, cb, &cd);
+	r = dfs_readdir(ctx, path, cb, &cd);
 
-	dfs_free_file(file);
 
 	return r;
 }
 
 int dfs_fuse_getattr(struct dfs_context *ctx, const char *path, struct stat *st)
 {
-	int r = -1;
-	struct dfs_file *file = NULL;
+	int r;
 
+	DFS_LOG_STATUS(ctx, "vpath: %s", path);
 
-	file = dfs_get_file(ctx, path);
-	if (!file)
-		return -1;
-
-	r = dfs_getattr(file, st);
-
-	dfs_free_file(file);
+	r = dfs_getattr(ctx, path, st);
 
 	if (r < 0) {
 
@@ -78,33 +69,61 @@ int dfs_fuse_create(struct dfs_context *ctx, const char *path, mode_t mode, stru
 	int r;
 	struct dfs_file *file = NULL;
 
-	file = dfs_get_file(ctx, path);
-	if (!file)
-		return -1;
+	DFS_LOG_STATUS(ctx, "vpath: %s", path, &file);
 
-	r = dfs_create(file, 0);
-
-	dfs_free_file(file);
+	r = dfs_create(ctx, path, 0, &file);
 
 	if (r < 0) {
 		return -1;
 	}
+
+	fi->fh = (uint64_t)file;
+
+	return r;
+}
+
+int dfs_fuse_open(struct dfs_context *ctx, const char *path, struct fuse_file_info *fi)
+{
+	int r = -1;
+	struct dfs_file *file = NULL;
+
+	DFS_LOG_STATUS(ctx, "vpath: %s", path);
+
+	r = dfs_open(ctx, path, fi->flags, &file);
+
+	if (r < 0) {
+		return -1;
+	}
+
+	fi->fh = (uint64_t)file;
+
+	return r;
+}
+
+int dfs_fuse_release(struct dfs_context *ctx, const char *path, struct fuse_file_info *fi)
+{
+	int r = -1;
+	struct dfs_file *file = (struct dfs_file*)fi->fh;
+
+
+	DFS_LOG_STATUS(ctx, "vpath: %s", path);
+
+	r = dfs_release(file);
+
+	if (r < 0)
+		return -1;
 
 	return r;
 }
 
 int dfs_fuse_write(struct dfs_context *ctx, const char *path, const char *buf, size_t len, off_t offset, struct fuse_file_info *fi)
 {
-	struct dfs_file *file = NULL;
+	struct dfs_file *file = (struct dfs_file*)fi->fh;
 	int r;
 
-	file = dfs_get_file(ctx, path);
-	if (!file)
-		return -1;
+	DFS_LOG_STATUS(ctx, "vpath: %s, file: %p, buf: %p, len: %u, off: %llu", path, fi->fh, buf, len, offset);
 
 	r = dfs_write(file, (const unsigned char*)buf, len, offset);
-
-	dfs_free_file(file);
 
 	if (r < 0) {
 		return -1;
@@ -116,15 +135,11 @@ int dfs_fuse_write(struct dfs_context *ctx, const char *path, const char *buf, s
 int dfs_fuse_read(struct dfs_context *ctx, const char *path, char *buf, size_t len, off_t offset, struct fuse_file_info *fi)
 {
 	int r;
-	struct dfs_file *file = NULL;
+	struct dfs_file *file = (struct dfs_file*)fi->fh;
 
-	file = dfs_get_file(ctx, path);
-	if (!file)
-		return -1;
+	DFS_LOG_STATUS(ctx, "vpath: %s, file: %p, buf: %p, len: %u, off: %llu", path, fi->fh, buf, len, offset);
 
 	r = dfs_read(file, (unsigned char*)buf, len, offset);
-
-	dfs_free_file(file);
 
 	if (r < 0) {
 		return -1;
@@ -138,13 +153,13 @@ int dfs_fuse_truncate(struct dfs_context *ctx, const char *path, off_t offset)
 	int r;
 	struct dfs_file *file = NULL;
 
+	DFS_LOG_STATUS(ctx, "vpath: %s", path);
+
 	file = dfs_get_file(ctx, path);
 	if (!file)
 		return -1;
 
 	r = dfs_truncate(file, offset);
-
-	dfs_free_file(file);
 
 	return r;
 }
@@ -152,15 +167,10 @@ int dfs_fuse_truncate(struct dfs_context *ctx, const char *path, off_t offset)
 int dfs_fuse_rmdir(struct dfs_context *ctx, const char *path)
 {
 	int r;
-	struct dfs_file *file = NULL;
 
-	file = dfs_get_file(ctx, path);
-	if (!file)
-		return -1;
+	DFS_LOG_STATUS(ctx, "vpath: %s", path);
 
-	r = dfs_rmdir(file);
-
-	dfs_free_file(file);
+	r = dfs_rmdir(ctx, path);
 
 	return r;
 }
@@ -168,15 +178,10 @@ int dfs_fuse_rmdir(struct dfs_context *ctx, const char *path)
 int dfs_fuse_mkdir(struct dfs_context *ctx, const char *path, mode_t mode)
 {
 	int r;
-	struct dfs_file *file = NULL;
 
-	file = dfs_get_file(ctx, path);
-	if (!file)
-		return -1;
+	DFS_LOG_STATUS(ctx, "vpath: %s", path);
 
-	r = dfs_mkdir(file, mode);
-
-	dfs_free_file(file);
+	r = dfs_mkdir(ctx, path, mode);
 
 	return r;
 }
@@ -184,15 +189,12 @@ int dfs_fuse_mkdir(struct dfs_context *ctx, const char *path, mode_t mode)
 int dfs_fuse_unlink(struct dfs_context *ctx, const char *path)
 {
 	int r;
-	struct dfs_file *file = NULL;
 
-	file = dfs_get_file(ctx, path);
-	if (!file)
-		return -1;
+	DFS_LOG_STATUS(ctx, "vpath: %s", path);
 
-	r = dfs_unlink(file);
 
-	dfs_free_file(file);
+	r = dfs_unlink(ctx, path);
+
 
 	return r;
 }
@@ -200,15 +202,10 @@ int dfs_fuse_unlink(struct dfs_context *ctx, const char *path)
 int dfs_fuse_rename(struct dfs_context *ctx, const char *old_path, const char *new_path, unsigned int flags)
 {
 	int r;
-	struct dfs_file *file = NULL;
 
-	file = dfs_get_file(ctx, old_path);
-	if (!file)
-		return -1;
+	DFS_LOG_STATUS(ctx, "old_vpath: %s new_vpath: %s", old_path, new_path);
 
-	r = dfs_rename(file, new_path);
-
-	dfs_free_file(file);
+	r = dfs_rename(ctx, old_path, new_path);
 
 	return r;
 }

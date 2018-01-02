@@ -21,6 +21,16 @@ static int fuse_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 	return dfs_fuse_readdir(&dfs_ctx, path, buf, filler, offset, fi);
 }
 
+static int fuse_open(const char *path, struct fuse_file_info *fi)
+{
+	return dfs_fuse_open(&dfs_ctx, path, fi);
+}
+
+static int fuse_release(const char *path, struct fuse_file_info *fi)
+{
+	return dfs_fuse_release(&dfs_ctx, path, fi);
+}
+
 static int fuse_create(const char *path, mode_t mode, struct fuse_file_info *fi)
 {
 	return dfs_fuse_create(&dfs_ctx, path, mode, fi);
@@ -70,6 +80,8 @@ static struct fuse_operations fuseops = {
 	.read = fuse_read,
 	.write = fuse_write,
 	.create = fuse_create,
+	.release = fuse_release,
+	.open = fuse_open,
 	.getattr = fuse_getattr,
 	.readdir = fuse_readdir
 };

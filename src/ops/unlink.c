@@ -2,11 +2,15 @@
 
 #include "ops.h"
 #include "../deadfs.h"
-#include "../file.h"
+#include "../path.h"
 
-int dfs_unlink(struct dfs_file *file)
+int dfs_unlink(struct dfs_context *ctx, const char *vpath)
 {
 	int r;
-	r = unlink(file->appath);
+	char *appath = dfs_path_vtoap_dup(ctx, vpath);
+
+	r = unlink(appath);
+
+	free(appath);
 	return r;
 }
