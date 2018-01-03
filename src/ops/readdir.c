@@ -25,9 +25,13 @@ int dfs_readdir(struct dfs_context *ctx, const char *vpath,
 	for (dp=readdir(dirp); dp; dp=readdir(dirp))
 	{
 		struct stat st;
-		char vname[sizeof(dp->d_name)];
+		char vname[256] = {0};
 
-		dfs_path_ptov(ctx, dp->d_name, vname, sizeof(vname));
+		if (strcmp(dp->d_name, ".") == 0 || strcmp(dp->d_name, "..") == 0)
+			strcpy(vname, dp->d_name);
+		else
+			dfs_nenc_decode(ctx, dp->d_name, vname, sizeof(vname));
+
 		stat(appath, &st);
 
 		cb(vname, &st, p);
