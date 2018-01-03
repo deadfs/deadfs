@@ -1,61 +1,185 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <utlist.h>
+
 #include "err.h"
 #include "path.h"
 
-static size_t calc_ppath_len(struct dfs_context *ctx, const char *vpath)
+struct token {
+	char *tok;
+	struct token *next;
+};
+
+static struct token* tokenize(const char *str, const char *sep)
 {
-	return strlen(vpath)+1;
+	struct token *tlist = NULL;
+	char *tmpstr = NULL;
+	char *saveptr = NULL;
+	char *tmptok = NULL;
+
+	tmpstr = strdup(str);
+	tmptok = strtok_r(tmpstr, sep, &saveptr);
+
+	while (tmptok) {
+
+		struct token *token = calloc(1, sizeof(struct token));
+		token->tok = strdup(tmptok);
+
+		LL_APPEND(tlist, token);
+
+		tmptok = strtok_r(NULL, sep, &saveptr);
+	}
+
+	free(tmpstr);
+	return tlist;
 }
 
-int dfs_path_vtop(struct dfs_context *ctx, const char *vpath, char *ppath, size_t len)
+static char* detokenize(struct token *tlist, const char *sep)
 {
-	int ppath_len = calc_ppath_len(ctx, vpath);
 
-	if (ppath_len > len)
-		return DFS_ERR_NOSPACE;
-
-	strncpy(ppath, vpath, ppath_len);
-
-	return 0;
+	return NULL;
 }
 
-char* dfs_path_vtop_dup(struct dfs_context *ctx, const char *vpath)
+static void free_token_list(struct token *tlist)
 {
-	int ppath_len = calc_ppath_len(ctx, vpath);
-	char *ret = malloc(ppath_len+1);
+	struct token *cur, *tmp;
 
-	dfs_path_vtop(ctx, vpath, ret, ppath_len+1);
+	LL_FOREACH_SAFE(tlist, cur, tmp) {
+		LL_DELETE(tlist, cur);
+		free(cur->tok);
+		free(cur);
+	}
+}
 
+static struct token* encode_token_list(struct dfs_context *ctx, struct token *tlist)
+{
+	struct token *ret = NULL, *cur;
+
+	LL_FOREACH(tlist, cur) {
+		size_t etok_len;
+		struct token *etok = calloc(1, sizeof(struct token));
+
+		etok_len = dfs_nenc_calc_enclen(ctx, cur->tok);
+
+		etok->tok = malloc(etok_len);
+		dfs_nenc_encode(ctx, cur->tok, etok->tok, etok_len);
+
+		LL_APPEND(ret, etok);
+	}
 
 	return ret;
 }
 
-static size_t calc_vpath_len(struct dfs_context *ctx, const char *ppath)
+static struct token* decode_token_list(struct dfs_context *ctx, struct token *tlist)
 {
-	return strlen(ppath)+1;
+	struct token *ret = NULL, *cur;
+
+	LL_FOREACH(tlist, cur) {
+		size_t dtok_len;
+		struct token *dtok = calloc(1, sizeof(struct token));
+
+		dtok_len = dfs_nenc_calc_enclen(ctx, cur->tok);
+
+		dtok->tok = malloc(dtok_len);
+		dfs_nenc_decode(ctx, cur->tok, dtok->tok, dtok_len);
+
+		LL_APPEND(ret, dtok);
+	}
+
+	return ret;
 }
 
-int dfs_path_ptov(struct dfs_context *ctx, const char *ppath, char *vpath, size_t len)
+static size_t calc_ppath_len(struct dfs_context *ctx, const char *vpath)
 {
-	int vpath_len = calc_vpath_len(ctx, ppath);
 
-	if (vpath_len > len)
-		return DFS_ERR_NOSPACE;
+	size_t len = 0;
 
-	strncpy(vpath, ppath, vpath_len);
+	struct token *tlist, *cur;
 
-	return 0;
+	tlist = tokenize(vpath, "/");
+
+	LL_FOREACH(tlist, cur) {
+		// '/' + encoded name - '\0'
+		len += 1 + dfs_nenc_calc_enclen(ctx, cur->tok)-1;
+	}
+
+	if (len == 0)
+		len = 1;
+
+
+	free_token_list(tlist);
+	return len + 1;
+}
+
+static size_t calc_vpath_len(struct dfs_context *ctx, const char *ppath)
+{
+	size_t len = 0;
+
+	struct token *tlist, *cur;
+
+	tlist = tokenize(ppath, "/");
+
+	LL_FOREACH(tlist, cur) {
+		// '/' + decoded name - '\0'
+		len += 1 + (dfs_nenc_calc_declen(ctx, cur->tok)-1);
+	}
+
+	if (len == 0)
+		len = 1;
+
+
+	free_token_list(tlist);
+	return len + 1;
+
 }
 
 char* dfs_path_ptov_dup(struct dfs_context *ctx, const char *ppath)
 {
+	struct token *tlist = tokenize(ppath, "/"), *cur, *dtlist;
 	int vpath_len = calc_vpath_len(ctx, ppath);
 	char *ret = malloc(vpath_len);
+	int ntok = 0;
 
-	//strncpy(ret, encpath, declen+1);
-	dfs_path_ptov(ctx, ppath, ret, vpath_len);
+	ret[0] = '\0';
+
+	dtlist = decode_token_list(ctx, tlist);
+
+	LL_FOREACH(dtlist, cur) {
+		ntok++;
+		strcat(ret, "/");
+		strcat(ret, cur->tok);
+	}
+
+	if (ntok == 0)
+		strcat(ret, "/");
+
+	free_token_list(tlist);
+	return ret;
+}
+
+char* dfs_path_vtop_dup(struct dfs_context *ctx, const char *vpath)
+{
+	struct token *tlist = tokenize(vpath, "/"), *cur, *etlist;
+	int ppath_len = calc_ppath_len(ctx, vpath);
+	char *ret = malloc(ppath_len);
+	int ntok = 0;
+
+	ret[0] = '\0';
+
+	etlist = encode_token_list(ctx, tlist);
+
+	LL_FOREACH(etlist, cur) {
+		ntok++;
+		strcat(ret, "/");
+		strcat(ret, cur->tok);
+	}
+
+	if (ntok == 0)
+		strcat(ret, "/");
+
+	free_token_list(tlist);
+	free_token_list(etlist);
 
 	return ret;
 }
