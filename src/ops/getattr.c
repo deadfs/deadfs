@@ -10,7 +10,7 @@
 int dfs_getattr(struct dfs_context *ctx, const char *vpath, struct stat *st)
 {
 	int r = DFS_ERR_GENERIC;
-	const char *appath = NULL;
+	char *appath = NULL;
 
 	appath = dfs_path_vtoap_dup(ctx, vpath);
 
@@ -25,6 +25,6 @@ int dfs_getattr(struct dfs_context *ctx, const char *vpath, struct stat *st)
 	r = 0;
 fail_stat:
 fail_access:
-	free((void*)appath);
+	free(appath);
 	return r;
 }
