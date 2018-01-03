@@ -29,21 +29,23 @@ static void destroy(void *ctx)
 
 static int calc_enclen(const char *in, void *ctx)
 {
-	return BASE32_LEN(strlen(in));
+	return BASE32_LEN(strlen(in))+1;
 }
 
 static int calc_declen(const char *in, void *ctx)
 {
-	return UNBASE32_LEN(strlen(in));
+	return UNBASE32_LEN(strlen(in))+1;
 }
 
 static void encode(const char *in, char *out, int len, void *ctx)
 {
+	memset(out, 0, len);
 	base32_encode((const unsigned char*)in, strlen(in), (unsigned char*)out);
 }
 
 static void decode(const char *in, char *out, int len, void *ctx)
 {
+	memset(out, 0, len);
 	base32_decode((const unsigned char*)in, (unsigned char*)out);
 }
 
