@@ -1,6 +1,8 @@
+#include <sys/types.h>
 #include <sys/stat.h>
 #include <errno.h>
 #include <unistd.h>
+#include <time.h>
 
 
 #include "../deadfs.h"
@@ -9,25 +11,26 @@
 
 int dfs_getattr(struct dfs_context *ctx, const char *vpath, struct stat *st)
 {
-	int r = DFS_ERR_GENERIC;
-	char *appath = NULL;
-	struct stat tmpst;
+	int r = DFS_ERR_GENERIC, rr;
+	struct dfs_file *file = NULL;
 
-	appath = dfs_path_vtoap_dup(ctx, vpath);
+	memset(st, 0, sizeof(*st));
 
-	if (access(appath, F_OK) == -1) {
-		r = DFS_ERR_NOENT;
-		goto fail_access;
+	rr = dfs_open_file(ctx, vpath, &file);
+	if (rr < 0) {
+		r = rr;
+		goto fail_open;
 	}
 
-	if (stat(appath, &tmpst) != 0)
-		goto fail_stat;
+	*st = file->st;
+	st->st_uid = getuid();
+	st->st_gid = getgid();
+	// TODO: Hide metadata (like times)!
+	st->st_size = file->size;
 
-	*st = tmpst;
 
 	r = 0;
-fail_stat:
-fail_access:
-	free(appath);
+	dfs_close_file(file);
+fail_open:
 	return r;
 }

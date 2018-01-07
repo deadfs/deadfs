@@ -24,7 +24,7 @@ void dfs_destroy(struct dfs_context *ctx)
 	// TODO: Free all other elements! (files, nencs, etc)
 }
 
-static struct dfs_file* new_file(struct dfs_context *ctx, const char *vpath, uint64_t size, uint64_t nb, uint64_t *blockids)
+static struct dfs_file* new_file(struct dfs_context *ctx, const char *vpath, struct stat *st, uint64_t size, uint64_t nb, uint64_t *blockids)
 {
 	struct dfs_file *file = NULL;
 
@@ -32,6 +32,7 @@ static struct dfs_file* new_file(struct dfs_context *ctx, const char *vpath, uin
 
 	file->dfs_ctx = ctx;
 	file->nref = 1;
+	file->st = *st;
 	file->vpath = strdup(vpath);
 	file->appath = dfs_path_vtoap_dup(ctx, vpath);
 	file->size = size;
@@ -95,6 +96,7 @@ int dfs_open_file(struct dfs_context *ctx, const char *vpath, struct dfs_file **
 	struct dfs_filehdr hdr;
 	char *appath = NULL;
 	uint64_t *blockids = NULL;
+	struct stat st = {0};
 
 	*retfile = NULL;
 	file = dfs_get_file(ctx, vpath);
@@ -107,13 +109,29 @@ int dfs_open_file(struct dfs_context *ctx, const char *vpath, struct dfs_file **
 
 	appath = dfs_path_vtoap_dup(ctx, vpath);
 
-	rr = dfs_readfile(ctx, appath, &hdr, &blockids);
-	if (rr != 0) {
-		r = rr;
-		goto fail_readfile;
+	if (access(appath, F_OK) != 0) {
+		r = DFS_ERR_NOENT;
+		goto fail_access;
 	}
 
-	file = new_file(ctx, vpath, hdr.size, hdr.nb, blockids);
+	if (stat(appath, &st) != 0)
+		goto fail_stat;
+
+	if (!S_ISDIR(st.st_mode)) {
+		rr = dfs_readfile(ctx, appath, &hdr, &blockids);
+		if (rr != 0) {
+			r = rr;
+			goto fail_readfile;
+		}
+	} else {
+		hdr.size = 0;
+		hdr.nb = 0;
+	}
+
+	st.st_uid = getuid();
+	st.st_gid = getgid();
+
+	file = new_file(ctx, vpath, &st, hdr.size, hdr.nb, blockids);
 	track_file(file);
 
 file_opened:
@@ -121,6 +139,8 @@ file_opened:
 		*retfile = file;
 
 	r = 0;
+fail_access:
+fail_stat:
 fail_readfile:
 	free(appath);
 	return r;
@@ -147,14 +167,7 @@ int dfs_create_file(struct dfs_context *ctx, const char *vpath, struct dfs_file 
 		goto fail_writefile;
 	}
 
-	file = new_file(ctx, vpath, hdr.size, hdr.nb, NULL);
-
-	track_file(file);
-
-	if (retfile)
-		*retfile = file;
-
-	r = 0;
+	r = dfs_open_file(ctx, vpath, retfile);
 fail_writefile:
 	free(appath);
 fail_opened:
@@ -166,6 +179,7 @@ void dfs_close_file(struct dfs_file *file)
 	if (!file)
 		return;
 
+	dfs_save_file(file);
 	file->nref--;
 
 	// There are still references to this file

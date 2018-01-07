@@ -7,5 +7,6 @@
 
 int dfs_write(struct dfs_file *file, const unsigned char *buf, size_t len, off_t offset)
 {
+	file->size += len;
 	return len;
 }

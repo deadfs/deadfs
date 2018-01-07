@@ -14,6 +14,8 @@ struct dfs_file {
 	UT_hash_handle hh;
 
 	int nref;
+
+	struct stat st;
 	const char *vpath;
 	const char *appath;
 
