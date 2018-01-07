@@ -5,7 +5,6 @@
 
 #include "deadfs.h"
 #include "path.h"
-#include "file.h"
 
 
 int dfs_init(struct dfs_context *ctx, const char *basepath)

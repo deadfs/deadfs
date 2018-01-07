@@ -4,7 +4,6 @@
 // Deadfs internal functions
 
 #include "deadfs.h"
-#include "file.h"
 
 // Raw file header structure present on the disk
 

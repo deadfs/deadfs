@@ -3,7 +3,6 @@
 #include "ops.h"
 #include "../deadfs.h"
 #include "../path.h"
-#include "../file.h"
 
 int dfs_rename(struct dfs_context *ctx, const char *old_path, const char *new_path)
 {

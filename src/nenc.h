@@ -13,6 +13,8 @@ enum {
 };
 
 
+struct dfs_context;
+
 struct dfs_nenc_ops {
 	void* (*init)(struct dfs_context *dfs_ctx);
 	void (*destroy)(void *ctx);

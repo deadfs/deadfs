@@ -1,13 +1,29 @@
 #ifndef SRC_DEADFS_H_
 #define SRC_DEADFS_H_
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <sys/stat.h>
 
 #include "config.h"
-#include "file.h"
 
 #include "nenc.h"
+
+
+struct dfs_file {
+	UT_hash_handle hh;
+
+	FILE *fp;
+	const char *vpath;
+	const char *appath;
+
+	struct dfs_context *dfs_ctx;
+
+	uint64_t size;
+	uint64_t nb;
+
+	uint64_t *blocks;
+};
 
 struct dfs_context {
 

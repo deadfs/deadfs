@@ -4,7 +4,6 @@
 #include <fcntl.h>
 
 #include "deadfs.h"
-#include "file.h"
 #include "err.h"
 #include "ops/ops.h"
 #include "utils/log.h"

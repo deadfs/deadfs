@@ -3,7 +3,6 @@
 #include <unistd.h>
 
 #include "../deadfs.h"
-#include "../file.h"
 #include "../path.h"
 #include "../err.h"
 

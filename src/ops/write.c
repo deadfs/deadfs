@@ -1,7 +1,6 @@
 #include <stdio.h>
 
 #include "../deadfs.h"
-#include "../file.h"
 #include "../err.h"
 
 // TODO: Check precise ferror for return

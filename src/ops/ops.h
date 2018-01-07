@@ -5,7 +5,6 @@
 #include <sys/stat.h>
 
 #include "../deadfs.h"
-#include "../file.h"
 
 int dfs_getattr(struct dfs_context *ctx, const char *vpath, struct stat *st);
 int dfs_readdir(struct dfs_context *ctx, const char *vpath,
