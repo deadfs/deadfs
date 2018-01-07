@@ -13,7 +13,7 @@
 struct dfs_file {
 	UT_hash_handle hh;
 
-	FILE *fp;
+	int nref;
 	const char *vpath;
 	const char *appath;
 
@@ -43,17 +43,14 @@ struct dfs_context {
 int dfs_init(struct dfs_context *ctx, const char *basepath);
 void dfs_destroy(struct dfs_context *ctx);
 
-struct dfs_file* dfs_new_file(struct dfs_context *ctx, FILE *fp, const char *vpath, uint64_t size, uint64_t nb, uint64_t *blockids);
-void dfs_free_file(struct dfs_file *file);
+int dfs_open_file(struct dfs_context *ctx, const char *vpath, struct dfs_file **retfile);
+int dfs_create_file(struct dfs_context *ctx, const char *vpath, struct dfs_file **retfile);
+int dfs_save_file(struct dfs_file *file);
+void dfs_close_file(struct dfs_file *file);
 
-void dfs_add_file(struct dfs_file *file);
-struct dfs_file* dfs_add_file_fast(struct dfs_context *ctx, FILE *fp, const char *vpath, uint64_t size, uint64_t nb, uint64_t *blockids);
-void dfs_del_file(struct dfs_file *file);
 struct dfs_file* dfs_get_file(struct dfs_context *ctx, const char *vpath);
 
 void dfs_add_nenc_fast(struct dfs_context *ctx, struct dfs_nenc_ops *ops, int id);
-
-
 int dfs_nenc_calc_enclen(struct dfs_context *ctx, const char *in);
 int dfs_nenc_calc_declen(struct dfs_context *ctx, const char *in);
 void dfs_nenc_encode(struct dfs_context *ctx, const char *in, char *out, int len);
