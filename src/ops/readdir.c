@@ -23,7 +23,7 @@ int dfs_readdir(struct dfs_context *ctx, const char *vpath,
 
 	for (dp=readdir(dirp); dp; dp=readdir(dirp))
 	{
-		struct stat st;
+		//struct stat st;
 		char vname[256] = {0};
 
 		if (strcmp(dp->d_name, ".") == 0 || strcmp(dp->d_name, "..") == 0)
@@ -31,9 +31,9 @@ int dfs_readdir(struct dfs_context *ctx, const char *vpath,
 		else
 			dfs_nenc_decode(ctx, dp->d_name, vname, sizeof(vname));
 
-		stat(appath, &st);
+		//stat(appath, &st);
 
-		cb(vname, &st, p);
+		cb(vname, NULL, p);
 	}
 
 	r = 0;
