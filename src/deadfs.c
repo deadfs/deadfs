@@ -8,6 +8,21 @@
 #include "file.h"
 
 
+int dfs_init(struct dfs_context *ctx, const char *basepath)
+{
+	ctx->basepath = strdup(basepath);
+	return 0;
+}
+
+void dfs_destroy(struct dfs_context *ctx)
+{
+	if (!ctx)
+		return;
+
+	free(ctx->basepath);
+	// TODO: Free all other elements! (files, nencs, etc)
+}
+
 struct dfs_file* dfs_get_file(struct dfs_context *ctx, const char *vpath)
 {
 	struct dfs_file *file = NULL;
@@ -17,7 +32,7 @@ struct dfs_file* dfs_get_file(struct dfs_context *ctx, const char *vpath)
 	return file;
 }
 
-struct dfs_file* dfs_add_file_fast(struct dfs_context *ctx, FILE *fp, const char *vpath, const char *appath)
+struct dfs_file* dfs_add_file_fast(struct dfs_context *ctx, FILE *fp, const char *vpath, uint64_t size, uint64_t nb, uint64_t *blocks)
 {
 	struct dfs_file *file = NULL;
 
@@ -26,7 +41,10 @@ struct dfs_file* dfs_add_file_fast(struct dfs_context *ctx, FILE *fp, const char
 	file->dfs_ctx = ctx;
 	file->fp = fp;
 	file->vpath = strdup(vpath);
-	file->appath = appath ? strdup(appath) : dfs_path_vtoap_dup(ctx, vpath);
+	file->appath = dfs_path_vtoap_dup(ctx, vpath);
+	file->size = size;
+	file->nb = nb;
+	file->blocks = blocks;
 
 	HASH_ADD_KEYPTR(hh, ctx->files, file->vpath, strlen(file->vpath), file);
 
@@ -45,6 +63,7 @@ void dfs_del_file(struct dfs_file *file)
 
 	free((void*)file->vpath);
 	free((void*)file->appath);
+	free(file->blocks);
 	free(file);
 }
 

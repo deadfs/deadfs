@@ -23,8 +23,12 @@ struct dfs_context {
 
 };
 
+int dfs_init(struct dfs_context *ctx, const char *basepath);
+void dfs_destroy(struct dfs_context *ctx);
+
+
 int dfs_add_file(struct dfs_file *file);
-struct dfs_file* dfs_add_file_fast(struct dfs_context *ctx, FILE *fp, const char *vpath, const char *appath);
+struct dfs_file* dfs_add_file_fast(struct dfs_context *ctx, FILE *fp, const char *vpath, uint64_t size, uint64_t nb, uint64_t *blocks);
 void dfs_del_file(struct dfs_file *file);
 struct dfs_file* dfs_get_file(struct dfs_context *ctx, const char *vpath);
 
