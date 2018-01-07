@@ -7,8 +7,10 @@
 
 struct dfs_config {
 	uint8_t version;
+	uint32_t blocksize;
 
 	unsigned char master_key[DFS_MASTERKEY_LEN];
+	// TODO: IV for blocks and filenodes
 
 	char nenc_name[20];
 	char denc_name[20];
