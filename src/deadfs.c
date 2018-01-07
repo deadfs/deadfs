@@ -31,7 +31,7 @@ struct dfs_file* dfs_get_file(struct dfs_context *ctx, const char *vpath)
 	return file;
 }
 
-struct dfs_file* dfs_add_file_fast(struct dfs_context *ctx, FILE *fp, const char *vpath, uint64_t size, uint64_t nb, uint64_t *blocks)
+struct dfs_file* dfs_new_file(struct dfs_context *ctx, FILE *fp, const char *vpath, uint64_t size, uint64_t nb, uint64_t *blocks)
 {
 	struct dfs_file *file = NULL;
 
@@ -43,9 +43,40 @@ struct dfs_file* dfs_add_file_fast(struct dfs_context *ctx, FILE *fp, const char
 	file->appath = dfs_path_vtoap_dup(ctx, vpath);
 	file->size = size;
 	file->nb = nb;
-	file->blocks = blocks;
+	file->blockids = blocks;
+
+	return file;
+}
+
+void dfs_free_file(struct dfs_file *file)
+{
+	if (!file)
+		return;
+
+	if (file->fp)
+		fclose(file->fp);
+
+	free((void*)file->vpath);
+	free((void*)file->appath);
+	free(file->blockids);
+	free(file);
+}
+
+void dfs_add_file(struct dfs_file *file)
+{
+	struct dfs_context *ctx = file->dfs_ctx;
 
 	HASH_ADD_KEYPTR(hh, ctx->files, file->vpath, strlen(file->vpath), file);
+}
+
+struct dfs_file* dfs_add_file_fast(struct dfs_context *ctx, FILE *fp, const char *vpath, uint64_t size, uint64_t nb, uint64_t *blocks)
+{
+	struct dfs_file *file = dfs_new_file(ctx, fp, vpath, size, nb, blocks);
+
+	if (!file)
+		return 0;
+
+	dfs_add_file(file);
 
 	return file;
 }
@@ -56,14 +87,6 @@ void dfs_del_file(struct dfs_file *file)
 		return;
 
 	HASH_DEL(file->dfs_ctx->files, file);
-
-	if (file->fp)
-		fclose(file->fp);
-
-	free((void*)file->vpath);
-	free((void*)file->appath);
-	free(file->blocks);
-	free(file);
 }
 
 void dfs_add_nenc_fast(struct dfs_context *ctx, struct dfs_nenc_ops *ops, int id)

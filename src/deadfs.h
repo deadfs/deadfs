@@ -22,7 +22,7 @@ struct dfs_file {
 	uint64_t size;
 	uint64_t nb;
 
-	uint64_t *blocks;
+	uint64_t *blockids;
 };
 
 struct dfs_context {
@@ -31,6 +31,7 @@ struct dfs_context {
 
 	char *basepath;
 
+	// Tracked files
 	struct dfs_file *files;
 
 	int nenc_id;
@@ -42,9 +43,11 @@ struct dfs_context {
 int dfs_init(struct dfs_context *ctx, const char *basepath);
 void dfs_destroy(struct dfs_context *ctx);
 
+struct dfs_file* dfs_new_file(struct dfs_context *ctx, FILE *fp, const char *vpath, uint64_t size, uint64_t nb, uint64_t *blockids);
+void dfs_free_file(struct dfs_file *file);
 
-int dfs_add_file(struct dfs_file *file);
-struct dfs_file* dfs_add_file_fast(struct dfs_context *ctx, FILE *fp, const char *vpath, uint64_t size, uint64_t nb, uint64_t *blocks);
+void dfs_add_file(struct dfs_file *file);
+struct dfs_file* dfs_add_file_fast(struct dfs_context *ctx, FILE *fp, const char *vpath, uint64_t size, uint64_t nb, uint64_t *blockids);
 void dfs_del_file(struct dfs_file *file);
 struct dfs_file* dfs_get_file(struct dfs_context *ctx, const char *vpath);
 
