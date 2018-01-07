@@ -8,21 +8,12 @@
 
 int dfs_read(struct dfs_file *file, unsigned char *buf, size_t len, off_t offset)
 {
-	int r = DFS_ERR_GENERIC, rr;
+
+	memset(buf, 'a', len);
+	return len;
+
 	if (fseek(file->fp, offset, SEEK_SET) != 0)
-		goto fail_fseek;
+		return DFS_ERR_GENERIC;
 
-	if ((rr=fread(buf, 1, len, file->fp)) >= 0) {
-		r = rr;
-		goto partial_fread;
-	} else {
-		goto fail_fread;
-	}
-
-	r = 0;
-
-partial_fread:
-fail_fread:
-fail_fseek:
-	return r;
+	return fread(buf, 1, len, file->fp);
 }

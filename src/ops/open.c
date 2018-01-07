@@ -30,7 +30,7 @@ int dfs_open(struct dfs_context *ctx, const char *vpath, unsigned int flags, str
 	if (!fp)
 		goto fail_fopen;
 
-	file = dfs_add_file_fast(ctx, fp, vpath, appath);
+	file = dfs_add_file_fast(ctx, fp, vpath, 0, 0, 0);
 
 	if (retfile)
 		*retfile = file;
