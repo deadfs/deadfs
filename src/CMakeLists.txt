@@ -3,6 +3,7 @@ add_executable(deadfs
 	main.c
 	path.c
 	fuse.c
+	intl.c
 	deadfs.c
  
  	ops/open.c
@@ -25,4 +26,4 @@ add_executable(deadfs
 	
 )
 
-target_link_libraries(deadfs osxfuse)
+target_link_libraries(deadfs fuse)
