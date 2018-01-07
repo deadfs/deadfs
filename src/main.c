@@ -6,8 +6,9 @@
 #include "ops/ops.h"
 #include "nencs/nencs.h"
 
+#define BASEPATH "/tmp/fusetest"
+
 static struct dfs_context dfs_ctx = {
-		.basepath = "/Users/francesco/Downloads/tmp/a",
 		.nenc_id = DFS_NENC_BASE32
 };
 
@@ -72,7 +73,25 @@ static int fuse_rename(const char *old_path, const char *new_path)
 	return dfs_fuse_rename(&dfs_ctx, old_path, new_path, 0);
 }
 
+static void* fuse_init()
+{
+	dfs_init(&dfs_ctx, BASEPATH);
+	dfs_nenc_base32_init(&dfs_ctx);
+
+	// TODO: Allocate dfsctx dinamically!!
+	return &dfs_ctx;
+}
+
+// "fuse_destroy" is already defined
+static void fuse_destroy2(void *private_data)
+{
+	struct dfs_context *ctx = private_data;
+	dfs_destroy(ctx);
+}
+
 static struct fuse_operations fuseops = {
+	.init = fuse_init,
+	.destroy = fuse_destroy2,
 	.rename = fuse_rename,
 	.unlink = fuse_unlink,
 	.mkdir = fuse_mkdir,
@@ -89,6 +108,5 @@ static struct fuse_operations fuseops = {
 
 int main(int argc, char **argv)
 {
-	dfs_nenc_base32_init(&dfs_ctx);
     return fuse_main(argc, argv, &fuseops, NULL);
 }
