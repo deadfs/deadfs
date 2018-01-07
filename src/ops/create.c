@@ -5,6 +5,7 @@
 #include "../err.h"
 #include "../intl.h"
 
+
 int dfs_create(struct dfs_context *ctx, const char *vpath, int trunc, struct dfs_file **retfile)
 {
 	int r = DFS_ERR_GENERIC;
@@ -17,7 +18,10 @@ int dfs_create(struct dfs_context *ctx, const char *vpath, int trunc, struct dfs
 	appath = dfs_path_vtoap_dup(ctx, vpath);
 	if (dfs_writefile(ctx, appath, &hdr, NULL) != 0)
 		goto fail_writefile;
+
 /*
+	appath = dfs_path_vtoap_dup(ctx, vpath);
+
 	fp = fopen(appath, mode);
 	if (!fp)
 		goto fail_fopen;

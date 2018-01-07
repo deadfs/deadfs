@@ -108,5 +108,6 @@ static struct fuse_operations fuseops = {
 
 int main(int argc, char **argv)
 {
+	dfs_nenc_base32_init(&dfs_ctx);
     return fuse_main(argc, argv, &fuseops, NULL);
 }
