@@ -30,12 +30,11 @@ static struct dfs_node* read_node(struct dfs_super *super, uint64_t id)
 		return NULL;
 
 	if (blockfs_readblock(super, id, &sn, sizeof(sn)) < sizeof(sn))
-		goto cleanup;
+		return NULL;
 
 	node = alloc_node(super);
 	node->mode = sn.mode;
 
-cleanup:
 	return node;
 }
 
