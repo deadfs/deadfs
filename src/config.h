@@ -14,6 +14,8 @@ struct dfs_config {
 
 	char nenc_name[20];
 	char denc_name[20];
+
+	char *basepath;
 };
 
 #endif /* SRC_CONFIG_H_ */

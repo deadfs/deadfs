@@ -5,57 +5,82 @@
 #include <stdlib.h>
 #include <sys/stat.h>
 
+#include <uthash.h>
+
 #include "config.h"
 
-#include "nenc.h"
+struct dfs_node;
+struct dfs_file;
+struct dfs_super;
 
+
+struct dfs_super_operations {
+
+	int (*init)(struct dfs_super*);
+	void (*destroy)(struct dfs_super*);
+
+	struct dfs_node* (*read_node)(struct dfs_super*, uint64_t);
+	struct dfs_node* (*alloc_node)(struct dfs_super*);
+	void (*destroy_node)(struct dfs_node*);
+
+	int (*write_node)(struct dfs_node*);
+	int (*exist_node)(struct dfs_super*, uint64_t);
+
+};
+
+struct dfs_super {
+	const struct dfs_super_operations *ops;
+	void *private_data;
+	struct dfs_context *ctx;
+};
+
+
+struct dfs_node_operations {
+};
+
+struct dfs_node {
+
+	uint64_t	id;
+
+	mode_t		mode;
+	uid_t		uid;
+	gid_t		gid;
+	uint64_t	size;
+
+	const struct dfs_node_operations *ops;
+	void *private_data;
+
+	struct dfs_super *super;
+};
+
+
+struct dfs_file_operations {
+	int (*open)(struct dfs_file*, struct dfs_node*);
+	int (*release)(struct dfs_file*, struct dfs_node*);
+	ssize_t (*read)(struct dfs_file*, unsigned char*, size_t);
+	ssize_t (*write)(struct dfs_file*, unsigned char*, size_t);
+};
 
 struct dfs_file {
-	UT_hash_handle hh;
 
-	int nref;
+	struct dfs_node *node;
 
-	struct stat st;
-	const char *vpath;
-	const char *appath;
-
-	struct dfs_context *dfs_ctx;
-
-	uint64_t size;
-	uint64_t nb;
-
-	uint64_t *blockids;
+	const struct dfs_file_operations *ops;
+	void *private_data;
 };
 
 struct dfs_context {
 
-	struct dfs_config *config;
+	struct dfs_config	*config;
 
-	char *basepath;
-
-	// Tracked files
-	struct dfs_file *files;
-
-	int nenc_id;
-	struct dfs_nenc *nencs;
-
+	struct dfs_super *super;
+	struct dfs_node *node;
+	//const struct dfs_super_operations *sops;
 
 };
 
-int dfs_init(struct dfs_context *ctx, const char *basepath);
+int dfs_init(struct dfs_context *ctx, const struct dfs_super_operations *sops);
 void dfs_destroy(struct dfs_context *ctx);
 
-int dfs_open_file(struct dfs_context *ctx, const char *vpath, struct dfs_file **retfile);
-int dfs_create_file(struct dfs_context *ctx, const char *vpath, struct dfs_file **retfile);
-int dfs_save_file(struct dfs_file *file);
-void dfs_close_file(struct dfs_file *file);
-
-struct dfs_file* dfs_get_file(struct dfs_context *ctx, const char *vpath);
-
-void dfs_add_nenc_fast(struct dfs_context *ctx, struct dfs_nenc_ops *ops, int id);
-int dfs_nenc_calc_enclen(struct dfs_context *ctx, const char *in);
-int dfs_nenc_calc_declen(struct dfs_context *ctx, const char *in);
-void dfs_nenc_encode(struct dfs_context *ctx, const char *in, char *out, int len);
-void dfs_nenc_decode(struct dfs_context *ctx, const char *in, char *out, int len);
 
 #endif /* SRC_DEADFS_H_ */

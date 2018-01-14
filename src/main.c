@@ -2,14 +2,18 @@
 #include <stdlib.h>
 
 #include "deadfs.h"
+#include "fs/blockfs/blockfs.h"
 #include "fuse.h"
-#include "ops/ops.h"
-#include "nencs/nencs.h"
+
 
 #define BASEPATH "/tmp/fusetest"
 
+static struct dfs_config dfs_cfg = {
+		.basepath = BASEPATH
+};
+
 static struct dfs_context dfs_ctx = {
-		.nenc_id = DFS_NENC_BASE32
+		.config = &dfs_cfg
 };
 
 static int fuse_getattr(const char *path, struct stat *st)
@@ -75,8 +79,7 @@ static int fuse_rename(const char *old_path, const char *new_path)
 
 static void* fuse_init()
 {
-	dfs_init(&dfs_ctx, BASEPATH);
-	dfs_nenc_base32_init(&dfs_ctx);
+	dfs_init(&dfs_ctx, &blockfs_sops);
 
 	// TODO: Allocate dfsctx dinamically!!
 	return &dfs_ctx;
@@ -108,6 +111,5 @@ static struct fuse_operations fuseops = {
 
 int main(int argc, char **argv)
 {
-	dfs_nenc_base32_init(&dfs_ctx);
     return fuse_main(argc, argv, &fuseops, NULL);
 }
