@@ -31,7 +31,7 @@ fail_stat:
 
 size_t dfs_writefile(const char *path, const unsigned char *data, size_t len)
 {
-	size_t ret = 0, rr;
+	size_t ret = 0;
 	FILE *fp = NULL;
 
 	fp = fopen(path, "wb");
