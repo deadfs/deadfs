@@ -11,6 +11,7 @@
 
 struct dfs_node;
 struct dfs_file;
+struct dfs_dentry;
 struct dfs_super;
 
 
@@ -34,6 +35,17 @@ struct dfs_super {
 	struct dfs_context *ctx;
 };
 
+
+struct dfs_dentry {
+
+	char *name;
+
+	struct dfs_node *node;
+
+	struct dfs_dentry *parent;
+	struct dfs_dentry *children;
+	struct dfs_dentry *prev, *next;
+};
 
 struct dfs_node_operations {
 };
