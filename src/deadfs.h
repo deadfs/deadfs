@@ -22,9 +22,7 @@ struct dfs_super_operations {
 
 	struct dfs_node* (*read_node)(struct dfs_super*, uint64_t);
 	struct dfs_node* (*alloc_node)(struct dfs_super*);
-	void (*destroy_node)(struct dfs_node*);
 
-	int (*write_node)(struct dfs_node*);
 	int (*exist_node)(struct dfs_super*, uint64_t);
 
 };
@@ -48,6 +46,10 @@ struct dfs_dentry {
 };
 
 struct dfs_node_operations {
+	void (*release)(struct dfs_node*);
+	int (*save)(struct dfs_node*);
+	struct dfs_entry* 	(*lookup)(struct dfs_node*);
+	struct dfs_file*	(*open_file)(struct dfs_node*);
 };
 
 struct dfs_node {
@@ -67,7 +69,6 @@ struct dfs_node {
 
 
 struct dfs_file_operations {
-	int (*open)(struct dfs_file*, struct dfs_node*);
 	int (*release)(struct dfs_file*, struct dfs_node*);
 	ssize_t (*read)(struct dfs_file*, unsigned char*, size_t);
 	ssize_t (*write)(struct dfs_file*, unsigned char*, size_t);
@@ -87,6 +88,7 @@ struct dfs_context {
 
 	struct dfs_super *super;
 	struct dfs_node *node;
+	struct dfs_entry *entry;
 	//const struct dfs_super_operations *sops;
 
 };

@@ -40,11 +40,14 @@ int dfs_init(struct dfs_context *ctx, const struct dfs_super_operations *sops)
 		ctx->node->mode = S_IFDIR | 755;
 
 		// Saving it
-		sops->write_node(ctx->node);
+		ctx->node->ops->save(ctx->node);
 
 		DFS_LOG_STATUS(ctx, "Node wrote %p", ctx->node);
 
 	}
+
+	if (ctx->node->ops->lookup)
+		ctx->entry = ctx->node->ops->lookup(ctx->node);
 
 	r = 0;
 cleanup:

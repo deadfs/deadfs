@@ -11,6 +11,15 @@
 static int exist_node(struct dfs_super *super, uint64_t id);
 static struct dfs_node* alloc_node(struct dfs_super *super);
 
+static void init_node(struct dfs_node *node, struct dfs_super *super)
+{
+	node->ops = &blockfs_nops;
+	node->gid = getgid();
+	node->uid = getuid();
+	node->super = super;
+	node->private_data = calloc(1, sizeof(struct blockfs_rawnode));
+}
+
 static int init(struct dfs_super *super)
 {
 	return 0;
@@ -43,29 +52,9 @@ static struct dfs_node* alloc_node(struct dfs_super *super)
 	struct dfs_node *node = NULL;
 
 	node = calloc(1, sizeof(struct dfs_node));
-	node->ops = &blockfs_nops;
-	node->gid = getgid();
-	node->uid = getuid();
-	node->super = super;
+	init_node(node, super);
 
 	return node;
-}
-
-static void destroy_node(struct dfs_node *node)
-{
-	free(node);
-}
-
-static int write_node(struct dfs_node *node)
-{
-	struct blockfs_rawnode sn;
-
-	sn.mode = node->mode;
-
-	if (blockfs_writeblock(node->super, node->id, &sn, sizeof(sn)) != 0)
-		return DFS_ERR_DENIED;
-
-	return 0;
 }
 
 static int exist_node(struct dfs_super *super, uint64_t id)
@@ -86,7 +75,5 @@ const struct dfs_super_operations blockfs_sops = {
 		.destroy = destroy,
 		.read_node = read_node,
 		.alloc_node = alloc_node,
-		.destroy_node = destroy_node,
-		.write_node = write_node,
 		.exist_node = exist_node
 };
