@@ -48,6 +48,9 @@ int dfs_init(struct dfs_context *ctx, const struct dfs_super_operations *sops)
 
 	if (ctx->node->ops->lookup)
 		ctx->entry = ctx->node->ops->lookup(ctx->node);
+	else {
+		ctx->entry = calloc(1, sizeof(struct dfs_dentry));
+	}
 
 	r = 0;
 cleanup:

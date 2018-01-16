@@ -18,7 +18,7 @@ static int save(struct dfs_node *node)
 	return 0;
 }
 
-static struct dfs_entry* lookup(struct dfs_node *node)
+static struct dfs_dentry* lookup(struct dfs_node *node)
 {
 	return NULL;
 }

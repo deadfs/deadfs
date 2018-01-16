@@ -48,7 +48,7 @@ struct dfs_dentry {
 struct dfs_node_operations {
 	void (*release)(struct dfs_node*);
 	int (*save)(struct dfs_node*);
-	struct dfs_entry* 	(*lookup)(struct dfs_node*);
+	struct dfs_dentry* 	(*lookup)(struct dfs_node*);
 	struct dfs_file*	(*open_file)(struct dfs_node*);
 };
 
@@ -88,7 +88,7 @@ struct dfs_context {
 
 	struct dfs_super *super;
 	struct dfs_node *node;
-	struct dfs_entry *entry;
+	struct dfs_dentry *entry;
 	//const struct dfs_super_operations *sops;
 
 };
