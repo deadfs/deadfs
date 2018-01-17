@@ -60,6 +60,7 @@ struct dfs_node {
 	uid_t		uid;
 	gid_t		gid;
 	uint64_t	size;
+	uint16_t	links;
 
 	const struct dfs_node_operations *ops;
 	void *private_data;
@@ -88,7 +89,7 @@ struct dfs_context {
 
 	struct dfs_super *super;
 	struct dfs_node *node;
-	struct dfs_dentry *entry;
+	struct dfs_dentry *dentry;
 	//const struct dfs_super_operations *sops;
 
 };
@@ -96,5 +97,7 @@ struct dfs_context {
 int dfs_init(struct dfs_context *ctx, const struct dfs_super_operations *sops);
 void dfs_destroy(struct dfs_context *ctx);
 
+int dfs_getattr(struct dfs_context *ctx, const char *vpath, struct stat *st);
+struct dfs_dentry* dfs_get_dentry(struct dfs_context *ctx, const char *vpath);
 
 #endif /* SRC_DEADFS_H_ */

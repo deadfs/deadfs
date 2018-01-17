@@ -42,7 +42,9 @@ static struct dfs_node* read_node(struct dfs_super *super, uint64_t id)
 		return NULL;
 
 	node = alloc_node(super);
+	node->id = id;
 	node->mode = sn.mode;
+	node->links = sn.links;
 
 	return node;
 }

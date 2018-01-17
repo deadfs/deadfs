@@ -12,6 +12,7 @@ extern const struct dfs_super_operations blockfs_sops;
 
 struct __attribute__ ((packed)) blockfs_rawnode {
 	uint16_t mode;
+	uint16_t links;
 	uint64_t nblocks;
 	uint64_t blocks[0];
 };

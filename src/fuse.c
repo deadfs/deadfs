@@ -18,7 +18,8 @@ int dfs_fuse_readdir(struct dfs_context *ctx, const char *path, void *buf, fuse_
 int dfs_fuse_getattr(struct dfs_context *ctx, const char *path, struct stat *st)
 {
 	DFS_LOG_STATUS(ctx, "vpath: %s", path);
-	return 0;
+
+	return dfs_getattr(ctx, path, st);
 }
 
 int dfs_fuse_create(struct dfs_context *ctx, const char *path, mode_t mode, struct fuse_file_info *fi)
