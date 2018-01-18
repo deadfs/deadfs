@@ -20,35 +20,18 @@ int dfs_init(struct dfs_context *ctx, const struct dfs_super_operations *sops)
 		if (sops->init(ctx->super) != 0)
 			goto cleanup;
 
-	if (sops->exist_node(ctx->super, 1)) {
+	ctx->node = sops->get_root(ctx->super);
 
-		ctx->node = sops->read_node(ctx->super, 1);
+	DFS_LOG_STATUS(ctx, "Node read: %p", ctx->node);
 
-		DFS_LOG_STATUS(ctx, "Node read: %p", ctx->node);
+	if (!ctx->node)
+		goto cleanup;
 
-		if (!ctx->node)
-			goto cleanup;
-
-	} else {
-
-		ctx->node = sops->alloc_node(ctx->super);
-
-		if (!ctx->node)
-			goto cleanup;
-
-		ctx->node->id = 1;
-		ctx->node->mode = S_IFDIR | 755;
-		ctx->node->links = 2;
-
-		// Saving it
-		ctx->node->ops->save(ctx->node);
-
-		DFS_LOG_STATUS(ctx, "Node wrote %p", ctx->node);
-
+	ctx->dentry = ctx->node->ops->lookup(ctx->node);
+	if (!ctx->dentry) {
+		DFS_LOG_ERROR(ctx, "Can't lookup root node");
+		goto cleanup;
 	}
-
-	ctx->dentry = calloc(1, sizeof(struct dfs_dentry));
-	ctx->dentry->node = ctx->node;
 
 	r = 0;
 cleanup:
@@ -68,6 +51,25 @@ void dfs_destroy(struct dfs_context *ctx)
 	free(ctx->super);
 }
 
+struct dfs_dentry* new_dentry(const char *name, nodeid_t nodeid, struct dfs_node *node)
+{
+	struct dfs_dentry *dentry = calloc(1, SIZEOF_DENTRY);
+
+	dentry->name = strdup(name);
+	dentry->nodeid = nodeid;
+	dentry->node = node;
+
+	return dentry;
+}
+
+void free_dentry(struct dfs_dentry *dentry)
+{
+	if (!dentry)
+		return;
+
+	free(dentry->name);
+	free(dentry);
+}
 
 int dfs_getattr(struct dfs_context *ctx, const char *vpath, struct stat *st)
 {
@@ -75,6 +77,12 @@ int dfs_getattr(struct dfs_context *ctx, const char *vpath, struct stat *st)
 	struct dfs_node *node = NULL;
 
 	if (!dentry)
+		return -1;
+
+	if (!dentry->node)
+		dentry->node = ctx->super->ops->read_node(ctx->super, dentry->nodeid);
+
+	if (!dentry->node)
 		return -1;
 
 	node = dentry->node;

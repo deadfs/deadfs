@@ -79,7 +79,7 @@ static int fuse_rename(const char *old_path, const char *new_path)
 
 static void* fuse_init()
 {
-	dfs_init(&dfs_ctx, &blockfs_sops);
+	dfs_init(&dfs_ctx, &blfs_sops);
 
 	// TODO: Allocate dfsctx dinamically!!
 	return &dfs_ctx;

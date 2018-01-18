@@ -6,7 +6,7 @@
 
 #include "blockfs.h"
 
-char* blockfs_getpath(struct dfs_super *super, uint64_t id)
+char* blfs_getpath(struct dfs_super *super, nodeid_t id)
 {
 	int len = snprintf(NULL, 0, "%s/%"PRIu64, super->ctx->config->basepath, id);
 	char *ret = malloc(len+1);
@@ -16,10 +16,10 @@ char* blockfs_getpath(struct dfs_super *super, uint64_t id)
 	return ret;
 }
 
-size_t blockfs_readblock(struct dfs_super *super, uint64_t id, void *data, size_t len)
+ssize_t blfs_readblock(struct dfs_super *super, nodeid_t id, void *data, size_t len)
 {
-	size_t r = 0;
-	char *path = blockfs_getpath(super, id);
+	ssize_t r;
+	char *path = blfs_getpath(super, id);
 
 	r = dfs_readfile(path, data, len);
 
@@ -27,13 +27,28 @@ size_t blockfs_readblock(struct dfs_super *super, uint64_t id, void *data, size_
 	return r;
 }
 
-size_t blockfs_writeblock(struct dfs_super *super, uint64_t id, void *data, size_t len)
+ssize_t blfs_writeblock(struct dfs_super *super, nodeid_t id, void *data, size_t len)
 {
-	size_t r = 0;
-	char *path = blockfs_getpath(super, id);
+	ssize_t r;
+	char *path = blfs_getpath(super, id);
 
 	r = dfs_writefile(path, data, len);
 
 	free(path);
 	return r;
+}
+
+void blfs_setup_node_rn(struct dfs_node *node, nodeid_t id, struct blfs_rawnode *rn)
+{
+	node->id = id;
+	node->mode = rn->mode;
+	node->links = rn->links;
+	node->private_data = rn;
+}
+
+struct blfs_rawnode* blfs_realloc_rn(struct blfs_rawnode *rn, uint64_t nblocks)
+{
+	struct blfs_rawnode *rnr = realloc(rn, sizeof(struct blfs_rawnode) + (nblocks * sizeof(uint64_t)));
+	rnr->nblocks = nblocks;
+	return rnr;
 }

@@ -17,7 +17,7 @@ void dfs_log_status(struct dfs_context *ctx, const char *fn, const char *fmt, ..
 	char cfmt[1024];
 	va_list args;
 
-	snprintf(cfmt, sizeof(cfmt), "["COLOR_YELLOW"*"COLOR_RESET"] deadfs %s(): %s\n", fn, fmt);
+	snprintf(cfmt, sizeof(cfmt), "["COLOR_YELLOW"*"COLOR_RESET"] %s(): %s\n", fn, fmt);
 
 	va_start(args, fmt);
 	vfprintf(stdout, cfmt, args);
@@ -29,7 +29,7 @@ void dfs_log_error(struct dfs_context *ctx, const char *fn, const char *fmt, ...
 	char cfmt[1024];
 	va_list args;
 
-	snprintf(cfmt, sizeof(cfmt), "["COLOR_RED"-"COLOR_RESET"] deadfs %s(): %s\n", fn, fmt);
+	snprintf(cfmt, sizeof(cfmt), "["COLOR_RED"-"COLOR_RESET"] %s(): %s\n", fn, fmt);
 
 	va_start(args, fmt);
 	vfprintf(stderr, cfmt, args);

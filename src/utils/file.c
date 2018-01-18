@@ -4,9 +4,9 @@
 
 #include "file.h"
 
-size_t dfs_readfile(const char *path, unsigned char *data, size_t len)
+ssize_t dfs_readfile(const char *path, unsigned char *data, size_t len)
 {
-	size_t ret = 0;
+	ssize_t ret = -1;
 	FILE *fp = NULL;
 	struct stat st;
 
@@ -29,9 +29,9 @@ fail_stat:
 }
 
 
-size_t dfs_writefile(const char *path, const unsigned char *data, size_t len)
+ssize_t dfs_writefile(const char *path, const unsigned char *data, size_t len)
 {
-	size_t ret = 0;
+	ssize_t ret = -1;
 	FILE *fp = NULL;
 
 	fp = fopen(path, "wb");

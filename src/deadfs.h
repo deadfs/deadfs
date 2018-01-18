@@ -9,11 +9,17 @@
 
 #include "config.h"
 
+#define DFS_FIRST_NODEID 1000
+
+typedef uint64_t nodeid_t;
+typedef uint64_t nodesize_t;
+
 struct dfs_node;
 struct dfs_file;
 struct dfs_dentry;
 struct dfs_super;
 
+#define SIZEOF_DENTRY sizeof(struct dfs_dentry)
 
 struct dfs_super_operations {
 
@@ -21,7 +27,8 @@ struct dfs_super_operations {
 	void (*destroy)(struct dfs_super*);
 
 	struct dfs_node* (*read_node)(struct dfs_super*, uint64_t);
-	struct dfs_node* (*alloc_node)(struct dfs_super*);
+	//struct dfs_node* (*alloc_node)(struct dfs_super*);
+	struct dfs_node* (*get_root)(struct dfs_super*);
 
 	int (*exist_node)(struct dfs_super*, uint64_t);
 
@@ -36,8 +43,9 @@ struct dfs_super {
 
 struct dfs_dentry {
 
-	char *name;
+	const char *name;
 
+	nodeid_t nodeid;
 	struct dfs_node *node;
 
 	struct dfs_dentry *parent;
@@ -54,13 +62,13 @@ struct dfs_node_operations {
 
 struct dfs_node {
 
-	uint64_t	id;
+	nodeid_t	id;
 
-	mode_t		mode;
-	uid_t		uid;
-	gid_t		gid;
-	uint64_t	size;
-	uint16_t	links;
+	mode_t			mode;
+	uid_t			uid;
+	gid_t			gid;
+	nodesize_t		size;
+	unsigned int	links;
 
 	const struct dfs_node_operations *ops;
 	void *private_data;
@@ -96,6 +104,9 @@ struct dfs_context {
 
 int dfs_init(struct dfs_context *ctx, const struct dfs_super_operations *sops);
 void dfs_destroy(struct dfs_context *ctx);
+
+struct dfs_dentry* new_dentry(const char *name, nodeid_t nodeid, struct dfs_node *node);
+void free_dentry(struct dfs_dentry *dentry);
 
 int dfs_getattr(struct dfs_context *ctx, const char *vpath, struct stat *st);
 struct dfs_dentry* dfs_get_dentry(struct dfs_context *ctx, const char *vpath);
