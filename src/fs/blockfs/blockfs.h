@@ -4,15 +4,16 @@
 #include "../../deadfs.h"
 
 
-extern const struct dfs_file_operations blfs_fops;
-extern const struct dfs_node_operations blfs_nops;
-extern const struct dfs_super_operations blfs_sops;
+extern const struct dfs_fileops blfs_fops;
+extern const struct dfs_nodeops blfs_nops;
+extern const struct dfs_superops blfs_sops;
 
 
 
 struct __attribute__ ((packed)) blfs_rawnode {
 	uint16_t mode;
 	uint16_t links;
+	uint64_t size;
 	uint64_t nblocks;
 	uint64_t blocks[0];
 };

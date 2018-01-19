@@ -13,15 +13,6 @@
 #define FIRST_NODEID 1000
 
 static int exist_node(struct dfs_super *super, nodeid_t id);
-static struct dfs_node* alloc_node(struct dfs_super *super);
-
-static void init_node(struct dfs_node *node, struct dfs_super *super)
-{
-	node->ops = &blfs_nops;
-	node->gid = getgid();
-	node->uid = getuid();
-	node->super = super;
-}
 
 static size_t dentry_to_rawdentry(struct dfs_dentry *dentry, unsigned char *rd)
 {
@@ -56,13 +47,6 @@ static size_t dentry_to_rawdentry(struct dfs_dentry *dentry, unsigned char *rd)
 	return r;
 }
 
-static void node_add_block(struct blfs_rawnode *rn)
-{
-	uint64_t nb = rn->nblocks;
-	rn = blfs_realloc_rn(rn, rn->nblocks+1);
-	rn->blocks[nb] = 0;
-}
-
 static void node_default_dir(struct dfs_node *node)
 {
 	node->mode = S_IFDIR | 0755;
@@ -78,42 +62,19 @@ static void node_default_reg(struct dfs_node *node)
 static int create_root_node(struct dfs_super *super)
 {
 	int r = -1;
-	size_t rdlen;
-	// Raw dentry block
-	unsigned char rd[100];
 
-	struct dfs_dentry *pd = NULL;
 	struct blfs_rawnode *rn = NULL;
 	struct dfs_node *node = NULL;
 
-	struct dfs_dentry d = {
-			.name = ".",
-			.nodeid = FIRST_NODEID
-	}, dd = {
-			.name = ".."
-	};
-
-	DL_APPEND(pd, &d);
-	DL_APPEND(pd, &dd);
-
-	node = alloc_node(super);
+	node = new_node(FIRST_NODEID, &blfs_nops, super);
 	if (!node) {
 		DFS_LOG_ERROR(super->ctx, "Can't allocate the node");
 		goto fail_alloc;
 	}
 
-	node->id = FIRST_NODEID;
 	node_default_dir(node);
 
-	rdlen = dentry_to_rawdentry(pd, rd);
-
-	if (blfs_writeblock(super, node->id+1, rd, rdlen) != rdlen) {
-		DFS_LOG_ERROR(super->ctx, "Can't write the rd block!");
-		goto fail_wb;
-	}
-
-	rn = blfs_realloc_rn(NULL, 1);
-	rn->blocks[0] = node->id+1;
+	rn = blfs_realloc_rn(NULL, 0);
 
 	node->private_data = rn;
 
@@ -125,8 +86,7 @@ static int create_root_node(struct dfs_super *super)
 	r = 0;
 
 fail_save:
-fail_wb:
-	node->ops->release(node);
+	free_node(node);
 fail_alloc:
 	return r;
 }
@@ -178,7 +138,7 @@ static struct dfs_node* read_node(struct dfs_super *super, nodeid_t id)
 
 	// TODO: Security check: Check if nblocks is greater than len
 
-	node = alloc_node(super);
+	node = new_node(id, &blfs_nops, super);
 	blfs_setup_node_rn(node, id, rn);
 
 	return node;
@@ -187,16 +147,6 @@ static struct dfs_node* read_node(struct dfs_super *super, nodeid_t id)
 static struct dfs_node* get_root(struct dfs_super *super)
 {
 	return read_node(super, FIRST_NODEID);
-}
-
-static struct dfs_node* alloc_node(struct dfs_super *super)
-{
-	struct dfs_node *node = NULL;
-
-	node = calloc(1, sizeof(struct dfs_node));
-	init_node(node, super);
-
-	return node;
 }
 
 static int exist_node(struct dfs_super *super, nodeid_t id)
@@ -212,7 +162,7 @@ static int exist_node(struct dfs_super *super, nodeid_t id)
 	return r;
 }
 
-const struct dfs_super_operations blfs_sops = {
+const struct dfs_superops blfs_sops = {
 		.init = init,
 		.destroy = destroy,
 		.read_node = read_node,

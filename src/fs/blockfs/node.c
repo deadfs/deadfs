@@ -1,6 +1,9 @@
+#include <unistd.h>
+#include <sys/types.h>
 #include <utlist.h>
 
 #include "blockfs.h"
+
 
 #include "../../err.h"
 #include "../../utils/log.h"
@@ -51,13 +54,19 @@ static struct dfs_dentry* rawdentry_to_dentry(unsigned char *rd, size_t len)
 	return list;
 }
 
-static void release(struct dfs_node *node)
+static int init(struct dfs_node *node)
+{
+	node->gid = getgid();
+	node->uid = getuid();
+	return 0;
+}
+
+static void destroy(struct dfs_node *node)
 {
 	if (!node)
 		return;
 
 	free(node->private_data);
-	free(node);
 }
 
 static int save(struct dfs_node *node)
@@ -67,11 +76,11 @@ static int save(struct dfs_node *node)
 
 	rn->mode = node->mode;
 	rn->links = node->links;
+	rn->size = node->size;
 
 	rnlen = SIZEOF_BLFS_RAWNODE(*rn);
-	node->size = rnlen;
 
-	if (blfs_writeblock(node->super, node->id, rn, rnlen ) != rnlen)
+	if (blfs_writeblock(node->super, node->id, rn, rnlen) != rnlen)
 		return DFS_ERR_DENIED;
 
 	return 0;
@@ -83,6 +92,9 @@ static struct dfs_dentry* lookup(struct dfs_node *node)
 	struct blfs_rawnode *rn = node->private_data;
 	unsigned char *rd = NULL;
 	ssize_t rdlen;
+
+	if (!node->size)
+		return NULL;
 
 	rdlen = blfs_readblock(node->super, rn->blocks[0], NULL, 0);
 	if (rdlen <= 0) {
@@ -107,8 +119,9 @@ fail_read:
 	return dret;
 }
 
-const struct dfs_node_operations blfs_nops = {
-		.release = release,
+const struct dfs_nodeops blfs_nops = {
+		.init = init,
+		.destroy = destroy,
 		.lookup = lookup,
 		.save = save
 };

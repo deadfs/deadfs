@@ -1,6 +1,6 @@
 #include "blockfs.h"
 
 
-const struct dfs_file_operations blfs_fops = {
+const struct dfs_fileops blfs_fops = {
 
 };

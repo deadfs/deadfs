@@ -2,13 +2,28 @@
 #include <string.h>
 
 #include <uthash.h>
+#include <utlist.h>
 
 #include "deadfs.h"
 #include "err.h"
 #include "utils/log.h"
 
 
-int dfs_init(struct dfs_context *ctx, const struct dfs_super_operations *sops)
+static struct dfs_dentry* base_dentry(struct dfs_node *node)
+{
+	struct dfs_dentry *ret = NULL;
+	struct dfs_dentry *d1, *d2;
+
+	d1 = new_dentry(".", node->id, node);
+	d2 = new_dentry("..", node->id, node);
+
+	DL_APPEND(ret, d1);
+	DL_APPEND(ret, d2);
+
+	return ret;
+}
+
+int dfs_init(struct dfs_context *ctx, const struct dfs_superops *sops)
 {
 	int r = DFS_ERR_GENERIC;
 
@@ -28,10 +43,9 @@ int dfs_init(struct dfs_context *ctx, const struct dfs_super_operations *sops)
 		goto cleanup;
 
 	ctx->dentry = ctx->node->ops->lookup(ctx->node);
-	if (!ctx->dentry) {
-		DFS_LOG_ERROR(ctx, "Can't lookup root node");
-		goto cleanup;
-	}
+	if (!ctx->dentry)
+		ctx->dentry = base_dentry(ctx->node);
+
 
 	r = 0;
 cleanup:
@@ -67,8 +81,35 @@ void free_dentry(struct dfs_dentry *dentry)
 	if (!dentry)
 		return;
 
-	free(dentry->name);
+	free((void*)dentry->name);
 	free(dentry);
+}
+
+struct dfs_node* new_node(nodeid_t id, const struct dfs_nodeops *ops, struct dfs_super *super)
+{
+	struct dfs_node *node = calloc(1, SIZEOF_NODE);
+	node->id = id;
+	node->ops = ops;
+	node->super = super;
+	if (node->ops->init) {
+		if (node->ops->init(node) != 0) {
+			free(node);
+			return NULL;
+		}
+	}
+
+	return node;
+}
+
+void free_node(struct dfs_node *node)
+{
+	if (!node)
+		return;
+
+	if (node->ops->destroy)
+		node->ops->destroy(node);
+
+	free(node);
 }
 
 int dfs_getattr(struct dfs_context *ctx, const char *vpath, struct stat *st)
@@ -115,12 +156,9 @@ struct dfs_dentry* dfs_get_dentry(struct dfs_context *ctx, const char *vpath)
 	if (strcmp(vpath, "/") == 0)
 		return ctx->dentry;
 
-	if (!ctx->dentry->children)
-		return NULL;
-
 	tmp = strdup(vpath);
 	token = strtok_r(tmp, "/", &save);
-	cur = ctx->dentry->children;
+	cur = ctx->dentry;
 
 	while (token && cur) {
 

@@ -38,11 +38,14 @@ ssize_t blfs_writeblock(struct dfs_super *super, nodeid_t id, void *data, size_t
 	return r;
 }
 
+
+// TODO: maybe remove id
 void blfs_setup_node_rn(struct dfs_node *node, nodeid_t id, struct blfs_rawnode *rn)
 {
 	node->id = id;
 	node->mode = rn->mode;
 	node->links = rn->links;
+	node->size = rn->size;
 	node->private_data = rn;
 }
 
