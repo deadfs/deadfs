@@ -1,8 +1,9 @@
-#include "fuse.h"
-
 #include <errno.h>
 #include <fcntl.h>
 
+#include <utlist.h>
+
+#include "fuse.h"
 #include "deadfs.h"
 #include "err.h"
 #include "utils/log.h"
@@ -11,7 +12,16 @@
 int dfs_fuse_readdir(struct dfs_context *ctx, const char *path, void *buf, fuse_fill_dir_t filler,
 		off_t offset, struct fuse_file_info *fi)
 {
+	struct dfs_dentry *dentry = NULL, *cur;
+
 	DFS_LOG_STATUS(ctx, "vpath: %s", path);
+
+	dentry = dfs_get_dentry(ctx, path);
+
+	DL_FOREACH (dentry, cur) {
+		filler(buf, cur->name, NULL, 0);
+	}
+
 	return 0;
 }
 
