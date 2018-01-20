@@ -80,6 +80,7 @@ struct dfs_node {
 
 
 struct dfs_fileops {
+	int (*open)(struct dfs_file*, struct dfs_node*);
 	int (*release)(struct dfs_file*, struct dfs_node*);
 	ssize_t (*read)(struct dfs_file*, unsigned char*, size_t);
 	ssize_t (*write)(struct dfs_file*, unsigned char*, size_t);
