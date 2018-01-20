@@ -21,6 +21,8 @@ struct dfs_super;
 
 #define SIZEOF_DENTRY sizeof(struct dfs_dentry)
 #define SIZEOF_NODE sizeof(struct dfs_node)
+#define SIZEOF_SUPER sizeof(struct dfs_super)
+#define SIZEOF_FILE sizeof(struct dfs_file)
 
 struct dfs_superops {
 
@@ -80,14 +82,16 @@ struct dfs_node {
 
 
 struct dfs_fileops {
-	int (*open)(struct dfs_file*, struct dfs_node*);
-	int (*release)(struct dfs_file*, struct dfs_node*);
+	int (*open)(struct dfs_file*);
+	void (*release)(struct dfs_file*);
+	off_t (*seek)(struct dfs_file*, off_t, int);
 	ssize_t (*read)(struct dfs_file*, unsigned char*, size_t);
 	ssize_t (*write)(struct dfs_file*, unsigned char*, size_t);
 };
 
 struct dfs_file {
 
+	struct dfs_context *ctx;
 	struct dfs_node *node;
 
 	const struct dfs_fileops *ops;
@@ -114,7 +118,8 @@ void free_dentry(struct dfs_dentry *dentry);
 struct dfs_node* new_node(nodeid_t id, const struct dfs_nodeops *ops, struct dfs_super *super);
 void free_node(struct dfs_node *node);
 
-
+struct dfs_file* new_file(struct dfs_node *node, const struct dfs_fileops *ops);
+void free_file(struct dfs_file *file);
 
 int dfs_getattr(struct dfs_context *ctx, const char *vpath, struct stat *st);
 struct dfs_dentry* dfs_get_dentry(struct dfs_context *ctx, const char *vpath);

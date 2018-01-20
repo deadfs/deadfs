@@ -112,6 +112,35 @@ void free_node(struct dfs_node *node)
 	free(node);
 }
 
+struct dfs_file* new_file(struct dfs_node *node, const struct dfs_fileops *ops)
+{
+	struct dfs_file *file = NULL;
+
+	file = calloc(1, SIZEOF_FILE);
+	file->ctx = node->super->ctx;
+	file->node = node;
+	file->ops = ops;
+
+	if (ops->open)
+		if (ops->open(file) != 0) {
+			free(file);
+			file = NULL;
+		}
+
+	return file;
+}
+
+void free_file(struct dfs_file *file)
+{
+	if (!file)
+		return;
+
+	if (file->ops->release)
+		file->ops->release(file);
+
+	free(file);
+}
+
 int dfs_getattr(struct dfs_context *ctx, const char *vpath, struct stat *st)
 {
 	struct dfs_dentry *dentry = dfs_get_dentry(ctx, vpath);
