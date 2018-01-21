@@ -1,6 +1,6 @@
 #include "blockfs.h"
 
-
+#define MAX(X, Y) (((X) > (Y)) ? (X) : (Y))
 #define MIN(X, Y) (((X) < (Y)) ? (X) : (Y))
 
 struct filectx {
@@ -96,6 +96,7 @@ static ssize_t read_blocksize(struct dfs_file *file, unsigned char *buf, size_t 
 	uint32_t cbpos = curblock_pos(file);
 	size_t rsize = blocksize - cbpos;
 	struct blfs_rawnode *rn = file->node->private_data;
+	struct filectx *fc = file->private_data;
 	unsigned char *blk = NULL;
 
 	if (rsize > size)
@@ -114,6 +115,8 @@ static ssize_t read_blocksize(struct dfs_file *file, unsigned char *buf, size_t 
 
 	r = rsize;
 
+	fc->pos += rsize;
+
 fail_read:
 	free(blk);
 fail_cbsize:
@@ -125,11 +128,9 @@ static ssize_t file_read(struct dfs_file *file, unsigned char *buf, size_t size)
 {
 	ssize_t rsize;
 	size_t rtsize = 0;
-	struct filectx *fc = file->private_data;
 
 	while (rtsize < size && (rsize=read_blocksize(file, buf+rtsize, size-rtsize)) > 0) {
 		rtsize += rsize;
-		fc->pos += rtsize;
 	}
 
 	return rtsize;
@@ -137,32 +138,34 @@ static ssize_t file_read(struct dfs_file *file, unsigned char *buf, size_t size)
 
 static ssize_t write_newblock(struct dfs_file *file, const unsigned char *buf, size_t size)
 {
+	uint32_t blocksize = file->ctx->config->blocksize;
 	uint64_t newblkid = blfs_inc_idctr(file->node->super);
+	size_t wsize = MIN(size, blocksize);
 
-	if (blfs_writeblock(file->node->super, newblkid, (void*)buf, size) != size)
+	if (blfs_writeblock(file->node->super, newblkid, (void*)buf, wsize) != wsize)
 		return -1;
 
 	// TODO: Check for return code
 	blfs_add_nodeblock(file->node, newblkid);
 
-	return size;
+	return wsize;
 }
 
-static ssize_t write_blocksize(struct dfs_file *file, const unsigned char *buf, size_t size)
+// Write update block
+static ssize_t write_upblock(struct dfs_file *file, const unsigned char *buf, size_t size)
 {
 	ssize_t r = -1;
 	uint32_t blocksize = file->ctx->config->blocksize;
-	uint64_t cbi = curblocki(file);
 	uint32_t cbpos = curblock_pos(file);
+	size_t maxwrite = blocksize - cbpos;
+	size_t wsize = MIN(maxwrite, size);
+	size_t nbsize = cbpos + wsize;
 	ssize_t cbsize;
-	size_t wsize = MIN(size, blocksize)-cbpos;
+	uint64_t cbi = curblocki(file);
 	uint64_t blkid;
-	uint64_t nblocks = blfs_get_nblocks(file->node);
+	struct filectx *fc = file->private_data;
 	unsigned char *blk = NULL;
 
-	// We need to create another block
-	if (cbi == nblocks)
-		return write_newblock(file, buf, wsize);
 
 	blkid = blfs_get_nodeblock(file->node, cbi);
 	if (!blkid)
@@ -170,37 +173,52 @@ static ssize_t write_blocksize(struct dfs_file *file, const unsigned char *buf, 
 
 	cbsize = blfs_readblock(file->node->super, blkid, NULL, 0);
 	if (cbsize <= 0)
-		goto fail_cbsize;
+		return -1;
 
-	blk = malloc(blocksize);
+	nbsize = MAX(cbsize, cbpos+wsize);
+	blk = malloc(nbsize);
 
 	if (blfs_readblock(file->node->super, blkid, blk, cbsize) != cbsize)
 		goto fail_read;
 
-	// TODO: Check if wsize is greater than cbsize and eventually increase file->node->size
 	memcpy(blk+cbpos, buf, wsize);
 
-	if (blfs_writeblock(file->node->super, blkid, blk, cbpos+wsize) != cbpos+wsize)
+	if (blfs_writeblock(file->node->super, blkid, blk, nbsize) != nbsize)
 		goto fail_write;
+
+	if (nbsize > cbsize)
+		file->node->size += nbsize - cbsize;
+
+	fc->pos += wsize;
 
 	r = wsize;
 
 fail_write:
 fail_read:
 	free(blk);
-fail_cbsize:
 	return r;
+}
+
+static ssize_t write_blocksize(struct dfs_file *file, const unsigned char *buf, size_t size)
+{
+	uint64_t cbi = curblocki(file);
+	uint64_t nblocks = blfs_get_nblocks(file->node);
+
+
+	// We need to create another block
+	if (cbi == nblocks)
+		return write_newblock(file, buf, size);
+	else
+		return write_upblock(file, buf, size);
 }
 
 static ssize_t file_write(struct dfs_file *file, const unsigned char *buf, size_t size)
 {
 	ssize_t wsize;
 	size_t wtsize = 0;
-	struct filectx *fc = file->private_data;
 
 	while (wtsize < size && (wsize=write_blocksize(file, buf+wtsize, size-wtsize)) > 0) {
 		wtsize += wsize;
-		fc->pos += wtsize;
 	}
 
 	return wtsize;
