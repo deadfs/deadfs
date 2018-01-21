@@ -119,6 +119,62 @@ fail_read:
 	return dret;
 }
 
+int blfs_add_nodeblock(struct dfs_node *node, uint64_t blkid)
+{
+	struct blfs_rawnode *rn = node->private_data;
+
+
+	if (!node->super->ops->exist_node(node->super, blkid))
+		return -1;
+
+	blfs_realloc_rn(node, rn->nblocks+1);
+
+	// rn may have been changed after realloc
+	rn = node->private_data;
+
+	rn->blocks[rn->nblocks-1] = blkid;
+
+	return 0;
+}
+
+uint64_t blfs_get_nodeblock(struct dfs_node *node, uint64_t index)
+{
+	struct blfs_rawnode *rn = node->private_data;
+
+	if (index >= rn->nblocks)
+		return 0;
+
+	return rn->blocks[index];
+}
+
+uint64_t blfs_get_nblocks(struct dfs_node *node)
+{
+	struct blfs_rawnode *rn = node->private_data;
+
+	if (!rn)
+		return 0;
+
+	return rn->nblocks;
+}
+
+void blfs_realloc_rn(struct dfs_node *node, uint64_t nblocks)
+{
+	struct blfs_rawnode *rn = node->private_data;
+	rn = realloc(rn, sizeof(struct blfs_rawnode) + (nblocks * sizeof(uint64_t)));
+	rn->nblocks = nblocks;
+	node->private_data = rn;
+}
+
+// TODO: maybe remove id
+void blfs_setup_node_rn(struct dfs_node *node, nodeid_t id, struct blfs_rawnode *rn)
+{
+	node->id = id;
+	node->mode = rn->mode;
+	node->links = rn->links;
+	node->size = rn->size;
+	node->private_data = rn;
+}
+
 const struct dfs_nodeops blfs_nops = {
 		.init = init,
 		.destroy = destroy,

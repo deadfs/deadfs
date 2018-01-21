@@ -37,21 +37,3 @@ ssize_t blfs_writeblock(struct dfs_super *super, nodeid_t id, void *data, size_t
 	free(path);
 	return r;
 }
-
-
-// TODO: maybe remove id
-void blfs_setup_node_rn(struct dfs_node *node, nodeid_t id, struct blfs_rawnode *rn)
-{
-	node->id = id;
-	node->mode = rn->mode;
-	node->links = rn->links;
-	node->size = rn->size;
-	node->private_data = rn;
-}
-
-struct blfs_rawnode* blfs_realloc_rn(struct blfs_rawnode *rn, uint64_t nblocks)
-{
-	struct blfs_rawnode *rnr = realloc(rn, sizeof(struct blfs_rawnode) + (nblocks * sizeof(uint64_t)));
-	rnr->nblocks = nblocks;
-	return rnr;
-}

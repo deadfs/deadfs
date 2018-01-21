@@ -86,7 +86,7 @@ struct dfs_fileops {
 	void (*release)(struct dfs_file*);
 	off_t (*seek)(struct dfs_file*, off_t, int);
 	ssize_t (*read)(struct dfs_file*, unsigned char*, size_t);
-	ssize_t (*write)(struct dfs_file*, unsigned char*, size_t);
+	ssize_t (*write)(struct dfs_file*, const unsigned char*, size_t);
 };
 
 struct dfs_file {

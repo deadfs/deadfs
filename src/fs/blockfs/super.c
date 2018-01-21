@@ -63,7 +63,6 @@ static int create_root_node(struct dfs_super *super)
 {
 	int r = -1;
 
-	struct blfs_rawnode *rn = NULL;
 	struct dfs_node *node = NULL;
 
 	node = new_node(FIRST_NODEID, &blfs_nops, super);
@@ -74,9 +73,8 @@ static int create_root_node(struct dfs_super *super)
 
 	node_default_dir(node);
 
-	rn = blfs_realloc_rn(NULL, 0);
+	blfs_realloc_rn(node, 0);
 
-	node->private_data = rn;
 
 	if (node->ops->save(node) != 0) {
 		DFS_LOG_ERROR(super->ctx, "Can't save the root node");
@@ -121,7 +119,6 @@ static void destroy(struct dfs_super *super)
 static struct dfs_node* read_node(struct dfs_super *super, nodeid_t id)
 {
 	struct dfs_node *node = NULL;
-	struct blfs_rawnode *rn;
 	ssize_t len;
 
 	if (!exist_node(super, id))
@@ -131,15 +128,20 @@ static struct dfs_node* read_node(struct dfs_super *super, nodeid_t id)
 	if (len < sizeof(struct blfs_rawnode))
 		return NULL;
 
-	rn = blfs_realloc_rn(NULL, (len-sizeof(struct blfs_rawnode))/sizeof(uint64_t));
+	//rn = blfs_realloc_rn(NULL, (len-sizeof(struct blfs_rawnode))/sizeof(uint64_t));
 
-	if (blfs_readblock(super, id, rn, len) < len)
+	node = new_node(id, &blfs_nops, super);
+	blfs_realloc_rn(node, (len-sizeof(struct blfs_rawnode))/sizeof(uint64_t));
+
+	if (blfs_readblock(super, id, node->private_data, len) < len) {
+		free_node(node);
 		return NULL;
+	}
 
 	// TODO: Security check: Check if nblocks is greater than len
 
-	node = new_node(id, &blfs_nops, super);
-	blfs_setup_node_rn(node, id, rn);
+	//node = new_node(id, &blfs_nops, super);
+	blfs_setup_node_rn(node, id, node->private_data);
 
 	return node;
 }
@@ -161,6 +163,13 @@ static int exist_node(struct dfs_super *super, nodeid_t id)
 
 	return r;
 }
+
+uint64_t blfs_inc_idctr(struct dfs_super *super)
+{
+	struct blfs_context *bctx = super->private_data;
+	return ++bctx->idctr;
+}
+
 
 const struct dfs_superops blfs_sops = {
 		.init = init,
