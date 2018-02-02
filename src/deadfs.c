@@ -59,6 +59,8 @@ void dfs_destroy(struct dfs_context *ctx)
 	if (!ctx)
 		return;
 
+	DFS_LOG_STATUS(ctx, "super: %p, ops: %p, destroy: %p", ctx->super, ctx->super->ops, ctx->super->ops->destroy);
+
 	if (ctx->super->ops->destroy)
 		ctx->super->ops->destroy(ctx->super);
 
@@ -121,8 +123,8 @@ struct dfs_file* new_file(struct dfs_node *node, const struct dfs_fileops *ops)
 	file->node = node;
 	file->ops = ops;
 
-	if (ops->open)
-		if (ops->open(file) != 0) {
+	if (ops->init)
+		if (ops->init(file) != 0) {
 			free(file);
 			file = NULL;
 		}
@@ -135,8 +137,8 @@ void free_file(struct dfs_file *file)
 	if (!file)
 		return;
 
-	if (file->ops->release)
-		file->ops->release(file);
+	if (file->ops->destroy)
+		file->ops->destroy(file);
 
 	free(file);
 }

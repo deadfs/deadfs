@@ -130,6 +130,8 @@ static struct dfs_node* read_node(struct dfs_super *super, nodeid_t id)
 
 	//rn = blfs_realloc_rn(NULL, (len-sizeof(struct blfs_rawnode))/sizeof(uint64_t));
 
+	return NULL;
+
 	node = new_node(id, &blfs_nops, super);
 	blfs_realloc_rn(node, (len-sizeof(struct blfs_rawnode))/sizeof(uint64_t));
 

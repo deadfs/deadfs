@@ -82,8 +82,8 @@ struct dfs_node {
 
 
 struct dfs_fileops {
-	int (*open)(struct dfs_file*);
-	void (*release)(struct dfs_file*);
+	int (*init)(struct dfs_file*);
+	void (*destroy)(struct dfs_file*);
 	off_t (*seek)(struct dfs_file*, off_t, int);
 	ssize_t (*read)(struct dfs_file*, unsigned char*, size_t);
 	ssize_t (*write)(struct dfs_file*, const unsigned char*, size_t);

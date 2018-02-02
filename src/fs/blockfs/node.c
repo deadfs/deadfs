@@ -89,32 +89,25 @@ static int save(struct dfs_node *node)
 static struct dfs_dentry* lookup(struct dfs_node *node)
 {
 	struct dfs_dentry *dret = NULL;
-	struct blfs_rawnode *rn = node->private_data;
 	unsigned char *rd = NULL;
-	ssize_t rdlen;
+	struct dfs_file *file = NULL;
 
 	if (!node->size)
 		return NULL;
 
-	rdlen = blfs_readblock(node->super, rn->blocks[0], NULL, 0);
-	if (rdlen <= 0) {
-		DFS_LOG_ERROR(node->super->ctx, "Bad rdlen");
+	file  = new_file(node, &blfs_fops);
+	if (!file)
 		return NULL;
-	}
 
-	rd = malloc(rdlen);
+	rd = malloc(node->size);
 
-
-	if (blfs_readblock(node->super, rn->blocks[0], rd, rdlen) != rdlen) {
-		DFS_LOG_ERROR(node->super->ctx, "Can't read rd");
+	if (file->ops->read(file, rd, node->size) != node->size)
 		goto fail_read;
-	}
 
-
-	dret = rawdentry_to_dentry(rd, rdlen);
-	DFS_LOG_STATUS(node->super->ctx, "DRET=%p", dret);
+	dret = rawdentry_to_dentry(rd, node->size);
 
 fail_read:
+	free_file(file);
 	free(rd);
 	return dret;
 }

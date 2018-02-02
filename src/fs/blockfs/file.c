@@ -53,7 +53,7 @@ static off_t seek(struct dfs_file *file, off_t offset, int whence)
 	}
 }
 
-static int file_open(struct dfs_file *file)
+static int file_init(struct dfs_file *file)
 {
 	struct filectx *fc = calloc(1, sizeof(struct filectx));
 	file->private_data = fc;
@@ -61,7 +61,7 @@ static int file_open(struct dfs_file *file)
 }
 
 
-static void release(struct dfs_file *file)
+static void destroy(struct dfs_file *file)
 {
 	if (!file)
 		return;
@@ -204,7 +204,6 @@ static ssize_t write_blocksize(struct dfs_file *file, const unsigned char *buf, 
 	uint64_t cbi = curblocki(file);
 	uint64_t nblocks = blfs_get_nblocks(file->node);
 
-
 	// We need to create another block
 	if (cbi == nblocks)
 		return write_newblock(file, buf, size);
@@ -226,8 +225,8 @@ static ssize_t file_write(struct dfs_file *file, const unsigned char *buf, size_
 
 
 const struct dfs_fileops blfs_fops = {
-		.open = file_open,
-		.release = release,
+		.init = file_init,
+		.destroy = destroy,
 		.seek = seek,
 		.read = file_read,
 		.write = file_write
