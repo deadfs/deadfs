@@ -58,7 +58,10 @@ struct dfs_nodeops {
 	int (*init)(struct dfs_node*);
 	void (*destroy)(struct dfs_node*);
 	int (*save)(struct dfs_node*);
+
 	struct dfs_dentry* 	(*lookup)(struct dfs_node*);
+	int (*save_dentry)(struct dfs_node*, struct dfs_dentry*);
+
 	struct dfs_file*	(*open_file)(struct dfs_node*);
 };
 

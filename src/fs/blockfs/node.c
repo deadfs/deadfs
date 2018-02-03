@@ -124,12 +124,17 @@ static struct dfs_dentry* lookup(struct dfs_node *node)
 	if (file->ops->read(file, rd, node->size) != node->size)
 		goto fail_read;
 
-	dret = rawdentry_to_dentry(rd, node->size);
+	DL_APPEND(dret, rawdentry_to_dentry(rd, node->size));
 
 fail_read:
 	free_file(file);
 	free(rd);
 	return dret;
+}
+
+static int save_dentry(struct dfs_node *node, struct dfs_dentry *dentry)
+{
+
 }
 
 int blfs_add_nodeblock(struct dfs_node *node, uint64_t blkid)
@@ -192,5 +197,6 @@ const struct dfs_nodeops blfs_nops = {
 		.init = init,
 		.destroy = destroy,
 		.lookup = lookup,
+		.save_dentry = save_dentry,
 		.save = save
 };

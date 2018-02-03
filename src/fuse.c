@@ -21,7 +21,6 @@ int dfs_fuse_readdir(struct dfs_context *ctx, const char *path, void *buf, fuse_
 	// TODO: FIXME
 	if (dentry && dentry->children) {
 		DL_FOREACH (dentry->children, cur) {
-			printf("LOL: %s\n", cur->name);
 			filler(buf, cur->name, NULL, 0);
 		}
 	}
