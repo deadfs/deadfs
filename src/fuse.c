@@ -18,8 +18,12 @@ int dfs_fuse_readdir(struct dfs_context *ctx, const char *path, void *buf, fuse_
 
 	dentry = dfs_get_dentry(ctx, path);
 
-	DL_FOREACH (dentry, cur) {
-		filler(buf, cur->name, NULL, 0);
+	// TODO: FIXME
+	if (dentry && dentry->children) {
+		DL_FOREACH (dentry->children, cur) {
+			printf("LOL: %s\n", cur->name);
+			filler(buf, cur->name, NULL, 0);
+		}
 	}
 
 	return 0;
@@ -27,9 +31,11 @@ int dfs_fuse_readdir(struct dfs_context *ctx, const char *path, void *buf, fuse_
 
 int dfs_fuse_getattr(struct dfs_context *ctx, const char *path, struct stat *st)
 {
-	DFS_LOG_STATUS(ctx, "vpath: %s", path);
+	int r;
 
-	return dfs_getattr(ctx, path, st);
+	r = dfs_getattr(ctx, path, st);
+	DFS_LOG_STATUS(ctx, "vpath: %s, r: %d", path, r);
+	return r;
 }
 
 int dfs_fuse_create(struct dfs_context *ctx, const char *path, mode_t mode, struct fuse_file_info *fi)
@@ -69,7 +75,9 @@ int dfs_fuse_rmdir(struct dfs_context *ctx, const char *path)
 
 int dfs_fuse_mkdir(struct dfs_context *ctx, const char *path, mode_t mode)
 {
-	return 0;
+	DFS_LOG_STATUS(ctx, "vpath: %s, mode: %o", path, mode);
+
+	return dfs_mkdir(ctx, path, mode);
 }
 
 int dfs_fuse_unlink(struct dfs_context *ctx, const char *path)

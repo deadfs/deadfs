@@ -47,16 +47,13 @@ static size_t dentry_to_rawdentry(struct dfs_dentry *dentry, unsigned char *rd)
 	return r;
 }
 
-static void node_default_dir(struct dfs_node *node)
+static struct dfs_node* create_node(struct dfs_super *super)
 {
-	node->mode = S_IFDIR | 0755;
-	node->links = 2;
-}
+	struct dfs_node *node = new_node(blfs_inc_idctr(super), &blfs_nops, super);
 
-static void node_default_reg(struct dfs_node *node)
-{
-	node->mode = S_IFREG | 0664;
-	node->links = 1;
+	blfs_realloc_rn(node, 0);
+
+	return node;
 }
 
 static int create_root_node(struct dfs_super *super)
@@ -128,10 +125,6 @@ static struct dfs_node* read_node(struct dfs_super *super, nodeid_t id)
 	if (len < sizeof(struct blfs_rawnode))
 		return NULL;
 
-	//rn = blfs_realloc_rn(NULL, (len-sizeof(struct blfs_rawnode))/sizeof(uint64_t));
-
-	return NULL;
-
 	node = new_node(id, &blfs_nops, super);
 	blfs_realloc_rn(node, (len-sizeof(struct blfs_rawnode))/sizeof(uint64_t));
 
@@ -173,11 +166,13 @@ uint64_t blfs_inc_idctr(struct dfs_super *super)
 }
 
 
+
 const struct dfs_superops blfs_sops = {
 		.init = init,
 		.destroy = destroy,
 		.read_node = read_node,
 		.get_root = get_root,
 		//.alloc_node = alloc_node,
+		.create_node = create_node,
 		.exist_node = exist_node
 };

@@ -86,18 +86,38 @@ static int save(struct dfs_node *node)
 	return 0;
 }
 
+static struct dfs_dentry* base_dentry(struct dfs_node *node)
+{
+	struct dfs_dentry *ret = NULL;
+	struct dfs_dentry *d1, *d2;
+
+	d1 = new_dentry(".", node->id, node);
+	d2 = new_dentry("..", node->id, node);
+
+	DL_APPEND(ret, d1);
+	DL_APPEND(ret, d2);
+
+	return ret;
+}
+
 static struct dfs_dentry* lookup(struct dfs_node *node)
 {
 	struct dfs_dentry *dret = NULL;
 	unsigned char *rd = NULL;
 	struct dfs_file *file = NULL;
 
-	if (!node->size)
+
+	if (!S_ISDIR(node->mode))
 		return NULL;
+
+	dret = base_dentry(node);
+
+	if (!node->size)
+		return dret;
 
 	file  = new_file(node, &blfs_fops);
 	if (!file)
-		return NULL;
+		return dret;
 
 	rd = malloc(node->size);
 

@@ -1,5 +1,6 @@
 #include <unistd.h>
 #include <string.h>
+#include <errno.h>
 
 #include <uthash.h>
 #include <utlist.h>
@@ -7,21 +8,6 @@
 #include "deadfs.h"
 #include "err.h"
 #include "utils/log.h"
-
-
-static struct dfs_dentry* base_dentry(struct dfs_node *node)
-{
-	struct dfs_dentry *ret = NULL;
-	struct dfs_dentry *d1, *d2;
-
-	d1 = new_dentry(".", node->id, node);
-	d2 = new_dentry("..", node->id, node);
-
-	DL_APPEND(ret, d1);
-	DL_APPEND(ret, d2);
-
-	return ret;
-}
 
 int dfs_init(struct dfs_context *ctx, const struct dfs_superops *sops)
 {
@@ -39,13 +25,14 @@ int dfs_init(struct dfs_context *ctx, const struct dfs_superops *sops)
 
 	DFS_LOG_STATUS(ctx, "Node read: %p", ctx->node);
 
-	if (!ctx->node)
+	if (!ctx->node) {
+		DFS_LOG_ERROR(ctx, "Failed to get the root node");
 		goto cleanup;
+	}
 
-	ctx->dentry = ctx->node->ops->lookup(ctx->node);
-	if (!ctx->dentry)
-		ctx->dentry = base_dentry(ctx->node);
+	ctx->dentry = new_dentry("r00t", ctx->node->id, ctx->node);
 
+	ctx->dentry->children = ctx->node->ops->lookup(ctx->node);
 
 	r = 0;
 cleanup:
@@ -114,6 +101,18 @@ void free_node(struct dfs_node *node)
 	free(node);
 }
 
+void node_default_dir(struct dfs_node *node)
+{
+	node->mode = S_IFDIR | 0755;
+	node->links = 2;
+}
+
+void node_default_reg(struct dfs_node *node)
+{
+	node->mode = S_IFREG | 0664;
+	node->links = 1;
+}
+
 struct dfs_file* new_file(struct dfs_node *node, const struct dfs_fileops *ops)
 {
 	struct dfs_file *file = NULL;
@@ -149,7 +148,7 @@ int dfs_getattr(struct dfs_context *ctx, const char *vpath, struct stat *st)
 	struct dfs_node *node = NULL;
 
 	if (!dentry)
-		return -1;
+		return -ENOENT;
 
 	if (!dentry->node)
 		dentry->node = ctx->super->ops->read_node(ctx->super, dentry->nodeid);
@@ -159,6 +158,7 @@ int dfs_getattr(struct dfs_context *ctx, const char *vpath, struct stat *st)
 
 	node = dentry->node;
 
+	st->st_ino = node->id;
 	st->st_mode = node->mode;
 	st->st_uid = node->uid;
 	st->st_gid = node->gid;
@@ -166,6 +166,64 @@ int dfs_getattr(struct dfs_context *ctx, const char *vpath, struct stat *st)
 	st->st_nlink = node->links;
 
 	return 0;
+}
+
+static int ends_with_slash(const char *path)
+{
+	return path[strlen(path)-1] == '/';
+}
+
+static void split_path(char *path, char **dir, char **name)
+{
+	char *f;
+
+	if (ends_with_slash(path))
+		return;
+
+	f = strrchr(path, '/');
+	*f = '\0';
+
+	*dir = path;
+	*name = f+1;
+}
+
+int dfs_mkdir(struct dfs_context *ctx, const char *vpath, mode_t mode)
+{
+	int r = -1;
+	struct dfs_super *super = ctx->super;
+	struct dfs_node *node;
+	struct dfs_dentry *de, *newde;
+	char *tmp, *name, *dir;
+
+	if (ends_with_slash(vpath))
+		return DFS_ERR_GENERIC;
+
+	tmp = strdup(vpath);
+
+	split_path(tmp, &dir, &name);
+
+	de = dfs_get_dentry(ctx, dir);
+	if (!de)
+		goto cleanup;
+
+	node = super->ops->create_node(super);
+	// No need to check for erros
+
+	node_default_dir(node);
+
+	if (node->ops->save(node) != 0) {
+		free_node(node);
+		return DFS_ERR_GENERIC;
+	}
+
+	newde = new_dentry(name, node->id, node);
+
+	DL_APPEND(de->children, newde);
+
+	r = 0;
+cleanup:
+	free(tmp);
+	return r;
 }
 
 struct dfs_node* dfs_get_node(struct dfs_context *ctx, const char *vpath)
@@ -177,26 +235,52 @@ struct dfs_node* dfs_get_node(struct dfs_context *ctx, const char *vpath)
 	return d->node;
 }
 
+static struct dfs_dentry* search_dentry(struct dfs_dentry *list, const char *name)
+{
+	struct dfs_dentry *cur;
+
+	DL_FOREACH (list, cur) {
+		if (strcmp(cur->name, name) == 0)
+			return cur;
+	}
+
+	return NULL;
+}
+
+static struct dfs_dentry* walk_dentry(struct dfs_dentry *dentry, char *token, char **save)
+{
+	struct dfs_dentry *found = search_dentry(dentry, token);
+
+	if (!found)
+		return NULL;
+
+	token = strtok_r(NULL, "/", save);
+	if (!token)
+		return found;
+
+	if (!found->children)
+		return NULL;
+
+	return walk_dentry(found->children, token, save);
+}
+
 struct dfs_dentry* dfs_get_dentry(struct dfs_context *ctx, const char *vpath)
 {
 	char *tmp = NULL;
 	char *save = NULL;
 	char *token = NULL;
-	struct dfs_dentry* cur = NULL;
+	struct dfs_dentry *ret;
 
-	if (strcmp(vpath, "/") == 0)
+	if (vpath[0] == '\0' || strcmp(vpath, "/") == 0)
 		return ctx->dentry;
 
+	// else walk dentries
 	tmp = strdup(vpath);
 	token = strtok_r(tmp, "/", &save);
-	cur = ctx->dentry;
 
-	while (token && cur) {
-
-		token = strtok_r(NULL, "/", &save);
-		cur = cur->children;
-	}
+	ret = walk_dentry(ctx->dentry->children, token, &save);
 
 	free(tmp);
-	return NULL;
+
+	return ret;
 }

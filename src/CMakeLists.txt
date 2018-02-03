@@ -7,4 +7,4 @@ add_subdirectory(fs)
 
 add_executable(deadfs ${SOURCES})
 
-target_link_libraries(deadfs fuse)
+target_link_libraries(deadfs osxfuse)

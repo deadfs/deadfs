@@ -9,7 +9,6 @@
 
 #include "config.h"
 
-#define DFS_FIRST_NODEID 1000
 
 typedef uint64_t nodeid_t;
 typedef uint64_t nodesize_t;
@@ -29,12 +28,12 @@ struct dfs_superops {
 	int (*init)(struct dfs_super*);
 	void (*destroy)(struct dfs_super*);
 
-	struct dfs_node* (*read_node)(struct dfs_super*, uint64_t);
+	struct dfs_node* (*read_node)(struct dfs_super*, nodeid_t);
 	//struct dfs_node* (*alloc_node)(struct dfs_super*);
 	struct dfs_node* (*get_root)(struct dfs_super*);
+	struct dfs_node* (*create_node)(struct dfs_super*);
 
-	int (*exist_node)(struct dfs_super*, uint64_t);
-
+	int (*exist_node)(struct dfs_super*, nodeid_t);
 };
 
 struct dfs_super {
@@ -51,7 +50,6 @@ struct dfs_dentry {
 	nodeid_t nodeid;
 	struct dfs_node *node;
 
-	struct dfs_dentry *parent;
 	struct dfs_dentry *children;
 	struct dfs_dentry *prev, *next;
 };
@@ -117,6 +115,9 @@ void free_dentry(struct dfs_dentry *dentry);
 
 struct dfs_node* new_node(nodeid_t id, const struct dfs_nodeops *ops, struct dfs_super *super);
 void free_node(struct dfs_node *node);
+void node_default_dir(struct dfs_node *node);
+void node_default_reg(struct dfs_node *node);
+
 
 struct dfs_file* new_file(struct dfs_node *node, const struct dfs_fileops *ops);
 void free_file(struct dfs_file *file);
